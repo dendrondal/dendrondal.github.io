@@ -1,0 +1,121 @@
+<!DOCTYPE HTML>
+<!--
+	Dimension by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html xmlns:alignment="http://www.w3.org/1999/xhtml">
+	<head>
+		<title>Dal</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../static/assets/css/main.css" />
+        <link rel="icon" href="../static/images/favicon.ico">
+		<noscript><link rel="stylesheet" href="../static/assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<div class="profile-image">
+                            <img src="../static/images/headshot.jpg" alt class="profile-image">
+						</div>
+						<div class="content">
+							<div class="inner">
+								<h1>Dal Williams</h1>
+								<p>Machine learning engineer who helps models go from prototype to product.
+                                Incurably curious, persistent and passionate. </p>
+							</div>
+						</div>
+						<nav>
+							<ul>
+								<li><a href="#intro">Principles</a></li>
+								<li><a href="#work">Blog</a></li>
+								<li><a href="#about">About</a></li>
+								<li><a href="#contact">Contact</a></li>
+								<!--<li><a href="#elements">Elements</a></li>-->
+							</ul>
+						</nav>
+					</header>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Intro -->
+                            <article id="intro">
+                                <h2 class="major">Principles</h2>
+                                <p>This page hopes to give you a summary of what drives me. Take it as a contract of what to expect when hired. Certainly not all ideas are originally mine, and many are taken from those who inspire me.</p>
+                                <p><strong>People &gt; Product &gt; Stack</strong></p>
+                                <p>One of the most important lessons I've learned by listening to various entrepreneurs is that you invest in people, not ideas. This stems from the belief that ideas are cheap and follow-through is expensive. As a second point to this, product means little without customers. Therefore, execution depends on having empathy for the customer, be it an end-user or another business. This empathy is also vital within the organization, because great teams make for great companites. As for the final point, though I certainly have favorite languages/frameworks/databases, I try to not make everything look like a nail just because I have a hammer. Depending on what's needed, I'm adaptable and love to learn. In the end, I just want to make the best version of whatever needs to be made given the allotted time.</p>
+                                <p><strong>Growth Mindset</strong></p>
+                                <p>Some hard lessons I learned in grad school is that the pursuit of knowledge is unending, and that mistakes are inevitable. I've learned to not take the latter personally, and I've come to love the former. One thing I've learned from this is the importance of living in the present, to learn from previous mistakes, but not let them define me, and to only worry about the future insofar as finishing projects on time. Other than that, as long as I adopt a pattern of continuous improvement and learning, I know everything else will work out.</p>
+                                <p><strong>Self-awareness</strong></p>
+                                <p>This may sound cliche, but I consider it important enough to warrant mention. I've learned to appreciate all of the opportunity I've been given, and all of the people that have had an impact on me over the years. There have been countless educators, advisors, and friends that have built me up and affirmed my growth, inspiring me be the best version of myself. Thus, I have no delusions about being a &quot;self-made man,&quot; and rather attempt to express humility in my interactions with colleagues. Therefore, I endeavor to own up to my mistakes, help build up those around me rather than attack them when they falter, and learn from the difference in knowledge and perspectives from those around me.</p>
+                                <p><strong>Family First</strong></p>
+                                <p>In this same vein, I will invariably prioritize a family emergency over coming into work, as I wouldn't be who I am without them. That being said, I am perfectly capable of remote work, and can do so when needed. This principle also extends into work-life balance, as I won't compromise the quality of my marriage for my career. In addition, my work performance is far better when not working 70-100 hour weeks, and I assume most employers prefer quality over quantity.</p>
+                                <p><strong>Other Principles</strong></p>
+                                <p><em>Listening:</em> A key factor in determining customer and company needs, and a quality that I pride myself on.</p>
+                                <p><em>Prioritizing:</em> I was my advisor's first graduate student, which gave me quite a bit of choice in which project to pursue. However, this resulted in several instances where I had to choose whether to abandon a project or push through. This gave me a great deal of practice in snatching low-hanging fruit while keeping the big picutre in mind.</p>
+                                <p><em>Being proactive:</em> There are several projects over the course of my career which certainly didn't fall into my lap, and I instead had to take initiative and present results to a superior, convincing them of the value of said project. I believe this level of autonomy, foresight, and negotiation skills will be an asset to anyone who hires me.</p>
+                                <p><em>Flexibility:</em> I have quite a bit of experience in environments that are out of my comfort zone. Whether this involves collaborating with people from disciplines I know little about, or being immersed in a country where my main language isn't spoken, I've learned to be flexible. I'll meet the other party in the middle rather than getting frustrated, and I can make on-the-fly adjustments in the wake of unexpected events.</p>
+                            </article>
+                            <!-- Work -->
+							<article id="work">
+                                <h2 class="major">Blog</h2>
+                                    <div class="fa-border" style="width: 100%"></div>
+                                        <div class="ls">
+                                            {%  for page in pages %}
+                                                <a href={{ url_for("render_post", path=page.path)}}>
+                                                    <div class="post">
+                                                        <div class="thumbnail">
+                                                            <img style="width:150px; height:150px; margin-left: 5%; margin-top: 5%; margin-bottom: 5%;" src={{ page.thumbnail }} alt>
+                                                        </div>
+                                                        <h3 style="margin-top:0; font-size:95%; alignment: center">{{page.title}}</h3>
+                                                        <h4 style=font-size:60%>{{ page.description }}</h4>
+                                                    </div>
+                                                </a>
+                                            {%  endfor %}
+                                        </div>
+                            </article>
+						<!-- About -->
+							<article id="about">
+								<h2 class="major">About</h2>
+                            
+								<p>I'm a chemistry PhD candidate with a wonderful wife and two cute cats. I grew up in east TN, close to Chattanooga. I went to UTK for undergrad, getting a chemistry major and a business minor, then came to Ole Miss to get a PhD with Dr. Davita Watkins. My research background has been a little all over the place, starting in bioinformatics and moving into semiconductors and biocompatible polymers, both with an emphasis on non-covalent interactions. I decided to take a scientific programming course during my second year of grad school, and got hooked on Python. After stumbling upon machine learning through my final project in this course, I started stocking my bookshelves with ML, software engineering, and math books. I eventually ended up at a small startup as a data scientist, where I was able to dive into a legacy codebase and gain real-world deployment and SQL experience. This cemented my desire to work with data, and made me realize how much I like to study the process behind data science, i.e. the pipeline that extends from data collection to product deployment. This has since been labelled as a machine learning engineer, which is the job description I tend to most closely align with. My wife and I love to play board games (Scythe is a personal favorite), travel, and go hiking/camping. When I'm not in lab, programming, or doing fun things with my wife, I enjoy gaming. StarCraft was my original favorite, which eventually gave way to DOTA, Hearthstone, and Overwatch. I tend to be very easy-going, and pride myself on being a good listener.</p>
+							</article>
+
+						<!-- Contact -->
+							<article id="contact">
+								<h2 class="major">Contact</h2>
+								<ul class="icons">
+									<li><a href="https://twitter.com/dendrondal" class="icon fa-twitter"><span class="label">Twitter</span></a></li>
+									<li><a href="https://bitbucket.org/dendrondal/" class="icon fa-bitbucket"><span class="label">BitBucket</span></a></li>
+                                    <li><a href="https://www.linkedin.com/in/dal-williams-18a8b45a/" class="icon fa-linkedin"><span class="label">LinkedIn</span></a></li>
+
+                                </ul>
+							</article>
+
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+						<p class="copyright">&copy; Dal Williams, 2019. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
+					</footer>
+
+			</div>
+
+		<!-- BG -->
+			<div id="bg"></div>
+
+		<!-- Scripts -->
+			<script src="../static/assets/js/jquery.min.js"></script>
+			<script src="../static/assets/js/browser.min.js"></script>
+			<script src="../static/assets/js/breakpoints.min.js"></script>
+			<script src="../static/assets/js/util.js"></script>
+			<script src="../static/assets/js/main.js"></script>
+
+	</body>
+</html>
