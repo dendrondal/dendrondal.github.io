@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "Portfolio"
+version = "0.3.0"
+description = ""
+license = "MIT"
+authors = ["Dal Williams <dendrondal@protonmail.com>"]
+
+[tool.poetry.urls]
+"homepage" = "https://dalwilliams.info"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+flask = "^1.0.2"
+elsa = "~0.1.5"
+Flask-FlatPages = "^0.7.1"
+Frozen-Flask = "~0.15"
