@@ -1,0 +1,90 @@
+title: Reproducibility in Data Science
+description: Thoughts on how to make exploratory data analysis with Jupyter Notebooks more reproducible
+thumbnail: https://upload.wikimedia.org/wikipedia/commons/c/c6/Topological_Ordering.svg
+tags: [Jupyter, Bash, Reproducibility, Visualization, Data Science, Machine Learning, Papermill, Airflow, Luigi]
+
+#Thoughts on Reproducibility in Data Science
+
+Coming from a natural science background, it's unsurprising that I have some pretty strong opinions on reproducibilty. Most data science textbooks will emphasize the issues of imbalanced data sets, overfitting, and stratification, but this only scratches the surface of potential issues encountered in reproducibility. A great deal of human error is possible in a machine learning system that can trip up even the smartest scientists. This is very much an unsolved problem that quite likely lacks a one-size-fits-all solution. That said, I'd like to focus on one of the major pain points in any pipeline: exploratory data analysis and feature engineering.
+
+##Notebook Blues
+Joel Grus's [talk on why he dislikes notebooks](https://docs.google.com/presentation/d/1n2RlMdmv1p25Xy5thJUhkKGvjtV-dkAIsUXP-AL4ffI/edit#slide=id.g3a428e2eb8_0_241) raises a lot of the more important issues with this concept. Notebooks lend themselves to a scripting style of programming, which would be fine in the EDA stage were it not for the issues of hidden states between cells. This can lead to some pretty poor conclusions if there are transformations in your data caused by these hidden states. However, being able to experiment with different features/graphing allows for maximum productivity. There's unfortunately not a happy medium (to my knowledge) between the flexibility and interactivity provided by notebooks and the reproducibility provided by a traditional software engineering workflow. This problem is compounded when you have multiple people working asynchronously on a project, even with the help of version control. I'd like to share some of my observations and thoughts on this issue, given it's importance to the data science workflow.
+
+##Analysis as a DAG
+There are several pieces of tech (Make, Airflow, Luigi) which utilize [analysis as a directed acyclic graph](https://drivendata.github.io/cookiecutter-data-science/).  This is an incredibly useful abstraction, though the actual shape of the DAG will certainly evolve over time. One of my first attempts to remedy reproducibility issues using this paradigm is to *only* use code that has been previously defined in well-commented, version controlled python files, which are imported into the notebook used for data analysis. However, this limits the ability to add new steps. Every time you decide you want a new transformation, you have to add it to the python module and then restart the kernel. This is especially bad if your pipeline includes a large amount of computational overhead to load the data in the first place, which is quite common. This can be partially fixed by using the autoreload magic method into a cell:
+
+    %load_ext autoreload
+    %autoreload 2
+
+This will make sure that every time you execute a cell, it re-imports everything from your module. You can also exclude certain modules with ```%aimport -not_this_module``` to help with load time.The [documentation](https://ipython.readthedocs.io/en/stable/config/extensions/autoreload.html?highlight=autoreload), however, points out that this doesn't always work when modifying module code. That brings us to the next approach:
+
+##TDDD
+I recently read a textbook that focues on [test-driven data science](https://www.amazon.com/Thoughtful-Machine-Learning-Python-Test-Driven-ebook/dp/B01N12DLF9). Though I'm not a big fan of pigeonholing myself into using object-oriented programming for every single model, this does actually create a decent amount of *extensibility* in the data analysis phase. The idea is to define a class which encapuslates any feature engineering and graphing in a .py file within a module. You can then open up a Jupyter notebook, and import that class from that module, where you can then define a subclass:
+        
+    class eda(model):
+        def new_transformation():
+            #transformations go here
+            pass
+    
+    predictor = eda()
+    predictor.plot_pca()
+
+The idea here is to extend the feature engineering in such a way that the core behavior is not affected, as an exception will be thrown otherwise.  This also remedies the previous issue of kernel reloads, as the behavior of your ETL can be modified without affecting any imports. Then, once you decide which transformations to keep, you just throw those into your base class, marking your results in your notebook. 
+
+Some of the problems with this approach should be apparent quite quickly. First off, it feels unnatural compared to the normal scripting approach taken with notebooks. Secondly, if you need to modify the child class, you'll have to re-execute cells out of order, or take another very strange approach:
+
+    def newer_transformation():
+        #new logic defined in a later cell
+        pass
+    
+    eda.featurename = newer_transformation
+
+
+It works, but it's quite an unnatural paradigm. The nice part about this is you can call ```dir(model)``` to keep track of what's been added. Note that there is also the [test-driven data analysis library](http://www.tdda.info/pdf/tdda-quickref.pdf) which abstracts away many of the assertions used in the *Thoughtful Machine Learning* approach, but I personally have no experience using this library. Their documentation is quite promising, however, so I'd recommend checking it out if you like this approach.
+
+##More general tips
+###Making requirements explicit
+A very useful extension to include in your notebooks is the [watermark](https://github.com/rasbt/watermark) extension:
+```python
+%load_extension watermark
+%watermark --iversions
+```
+This is basically a mini requirements.txt for a notebook, which can help people later down the road to reproduce your analysis. As a more advanced approach, Docker can be used to containerize notebooks, and the [Jupyter team has several containers you can use as a starting point](https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html)
+
+###Making intention explicit
+The markdown cells interspersed in your notebooks should have more than just analysis of the results. You should define *why* you chose this process in the first place. I would recommend doing this *before* running code, because for a failed analysis it's something that easily falls by the wayside. But true negatives are important too, so document everything! Rose et al. published [a series of heuristics on reproducibility in Jupyter](https://arxiv.org/abs/1810.08055) which goes into more detail on these points, as well as a few other issues touched in this article.
+
+###Naming conventions and asynchronous workflows
+Though [ZEPL](https://www.zepl.com/) attempts to fix this, asynchronous work in jupyter notebooks is generally ill-advised. This is unless you're hosting them on your own server with continuous integration built-in, which creates another layer of technical debt. The phenomenal [cookiecutter data science](http://drivendata.github.io/cookiecutter-data-science/) article sums this up well:
+
+>When we use notebooks in our work, we often subdivide the notebooks folder. For example, notebooks/exploratory contains initial explorations, whereas notebooks/reports is more polished work that can be exported as html to the reports directory. Since notebooks are challenging objects for source control (e.g., diffs of the json are often not human-readable and merging is near impossible), we recommended not collaborating directly with others on Jupyter notebooks. There are two steps we recommend for using notebooks effectively:
+
+>* Follow a naming convention that shows the owner and the order the analysis was done in. We use the format <step>-<ghuser>-<description>.ipynb (e.g., 0.3-bull-visualize-distributions.ipynb).
+
+>* Refactor the good parts. Don't write code to do the same task in multiple notebooks. If it's a data preprocessing task, put it in the pipeline at src/data/make_dataset.py and load data from data/interim. If it's useful utility code, refactor it to src.
+
+That brings us to one final consideration:  
+
+##Papermill
+Stripe [wrote a blog post on reproducible data science](https://stripe.com/blog/reproducible-research) a few years ago. Their approach was twofold: 
+1. They created a pre-commit hook that serves notebooks statically as HTML, and strips results from all cells. This ensures back-to-front execution of notebooks.
+2. They created common entry points for the queries that produced their analysis data.
+The next year, a NumFOCUS project called [papermill](https://github.com/nteract/papermill) was created that standardizes this process, with quite a few added benefits. First off, it fixes the point-of-entry problem with accessing data by allowing direct linkage to Azure/S3 buckets via CLI. It also allows back-to-front execution by including a testing framework for individual notebooks, as well as a form of integration testing by allowing notebooks to be executed in sequence if needed. This ties into the Analysis as a DAG paradigm, as you can run different tranformations based on the result of different experiments. Did your neural network overfit your data? Increase the dropout or trim the layers and try again automatically. Or vice-versa!
+
+![Explicit variables are best variables!](https://github.com/nteract/papermill/raw/master/docs/img/enable_parameters.gif)
+
+Two super useful features in this library are parameterization of cells and recording of output. Parameterization allows variables to be explicitly defined within cells. This increases transparency and allows for rapid iteration, as the parameters can be changed on subsequent runs using the CLI. Recording allows for cell output to be stored, helping with the hidden state issue that notebooks so often encounter. These are godsends for large teams. Papermill allows you to load multiple notebooks, and load parameters and outputs (including graphs) from all notebooks as a dataframe, so you can get a meta-analysis of what everyone in the team has tried! [Netflix](https://medium.com/netflix-techblog/scheduling-notebooks-348e6c14cfd6) has made great use of papermill, so I'd recommend reading their entries for additional information.
+
+##Conclusions
+Some people may think these approaches are overkill, but good process at this stage can lead to better production systems down the line. Take a little more time with your EDA, and you'll save yourself some technical debt in the long run. And as always, not one process works for everyone, so I've tried to give an overview of the notebook reproducibility landscape rather than dictating from an ivory tower. That being said, there are a few things to keep in mind no matter what approach you prefer (aka **TL;DR**):
+
+1. Use some variant of cookiecutter
+2. Name your notebooks well
+3. Be explicit in each step, and remember true negatives are also valuable
+4. Refactor important code into version-controlled python modules when possible
+
+Thanks for reading!
+
+
+
+
