@@ -15,42 +15,37 @@
 <p>Joel Grus's <a href="https://docs.google.com/presentation/d/1n2RlMdmv1p25Xy5thJUhkKGvjtV-dkAIsUXP-AL4ffI/edit#slide=id.g3a428e2eb8_0_241">talk on why he dislikes notebooks</a> raises a lot of the more important issues with this concept. Notebooks lend themselves to a scripting style of programming, which would be fine in the EDA stage were it not for the issues of hidden states between cells. This can lead to some pretty poor conclusions if there are transformations in your data caused by these hidden states. However, being able to experiment with different features/graphing allows for maximum productivity. There's unfortunately not a happy medium (to my knowledge) between the flexibility and interactivity provided by notebooks and the reproducibility provided by a traditional software engineering workflow. This problem is compounded when you have multiple people working asynchronously on a project, even with the help of version control. I'd like to share some of my observations and thoughts on this issue, given it's importance to the data science workflow.</p>
 <h2>Analysis as a DAG</h2>
 <p>There are several pieces of tech (Make, Airflow, Luigi) which utilize <a href="https://drivendata.github.io/cookiecutter-data-science/">analysis as a directed acyclic graph</a>.  This is an incredibly useful abstraction, though the actual shape of the DAG will certainly evolve over time. One of my first attempts to remedy reproducibility issues using this paradigm is to <em>only</em> use code that has been previously defined in well-commented, version controlled python files, which are imported into the notebook used for data analysis. However, this limits the ability to add new steps. Every time you decide you want a new transformation, you have to add it to the python module and then restart the kernel. This is especially bad if your pipeline includes a large amount of computational overhead to load the data in the first place, which is quite common. This can be partially fixed by using the autoreload magic method into a cell:</p>
-<div class="codehilite"><pre><span></span><span class="nf">%load_ext</span> <span class="n">autoreload</span>
-<span class="nf">%autoreload</span> <span class="mi">2</span>
-</pre></div>
-
-
+<pre><code>%load_ext autoreload
+%autoreload 2
+</code></pre>
 <p>This will make sure that every time you execute a cell, it re-imports everything from your module. You can also exclude certain modules with <code>%aimport -not_this_module</code> to help with load time.The <a href="https://ipython.readthedocs.io/en/stable/config/extensions/autoreload.html?highlight=autoreload">documentation</a>, however, points out that this doesn't always work when modifying module code. That brings us to the next approach:</p>
 <h2>TDDD</h2>
 <p>I recently read a textbook that focues on <a href="https://www.amazon.com/Thoughtful-Machine-Learning-Python-Test-Driven-ebook/dp/B01N12DLF9">test-driven data science</a>. Though I'm not a big fan of pigeonholing myself into using object-oriented programming for every single model, this does actually create a decent amount of <em>extensibility</em> in the data analysis phase. The idea is to define a class which encapuslates any feature engineering and graphing in a .py file within a module. You can then open up a Jupyter notebook, and import that class from that module, where you can then define a subclass:</p>
-<div class="codehilite"><pre><span></span><span class="kr">class</span> <span class="nx">eda</span><span class="p">(</span><span class="nx">model</span><span class="p">)</span><span class="o">:</span>
-    <span class="nx">def</span> <span class="nx">new_transformation</span><span class="p">()</span><span class="o">:</span>
-        <span class="err">#</span><span class="nx">transformations</span> <span class="nx">go</span> <span class="nx">here</span>
-        <span class="nx">pass</span>
+<pre><code>class eda(model):
+    def new_transformation():
+        #transformations go here
+        pass
 
-<span class="nx">predictor</span> <span class="o">=</span> <span class="nx">eda</span><span class="p">()</span>
-<span class="nx">predictor</span><span class="p">.</span><span class="nx">plot_pca</span><span class="p">()</span>
-</pre></div>
-
-
+predictor = eda()
+predictor.plot_pca()
+</code></pre>
 <p>The idea here is to extend the feature engineering in such a way that the core behavior is not affected, as an exception will be thrown otherwise.  This also remedies the previous issue of kernel reloads, as the behavior of your ETL can be modified without affecting any imports. Then, once you decide which transformations to keep, you just throw those into your base class, marking your results in your notebook. </p>
 <p>Some of the problems with this approach should be apparent quite quickly. First off, it feels unnatural compared to the normal scripting approach taken with notebooks. Secondly, if you need to modify the child class, you'll have to re-execute cells out of order, or take another very strange approach:</p>
-<div class="codehilite"><pre><span></span>def newer_transformation():
+<pre><code>def newer_transformation():
     #new logic defined in a later cell
     pass
 
 eda.featurename = newer_transformation
-</pre></div>
-
-
+</code></pre>
 <p>It works, but it's quite an unnatural paradigm. The nice part about this is you can call <code>dir(model)</code> to keep track of what's been added. Note that there is also the <a href="http://www.tdda.info/pdf/tdda-quickref.pdf">test-driven data analysis library</a> which abstracts away many of the assertions used in the <em>Thoughtful Machine Learning</em> approach, but I personally have no experience using this library. Their documentation is quite promising, however, so I'd recommend checking it out if you like this approach.</p>
 <h2>More general tips</h2>
 <h3>Making requirements explicit</h3>
-<p>A very useful extension to include in your notebooks is the <a href="https://github.com/rasbt/watermark">watermark</a> extension:
-<code>python
-%load_extension watermark
-%watermark --iversions</code>
-This is basically a mini requirements.txt for a notebook, which can help people later down the road to reproduce your analysis. As a more advanced approach, Docker can be used to containerize notebooks, and the <a href="https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html">Jupyter team has several containers you can use as a starting point</a></p>
+<p>A very useful extension to include in your notebooks is the <a href="https://github.com/rasbt/watermark">watermark</a> extension:</p>
+<pre><code class="python">%load_extension watermark
+%watermark --iversions
+</code></pre>
+
+<p>This is basically a mini requirements.txt for a notebook, which can help people later down the road to reproduce your analysis. As a more advanced approach, Docker can be used to containerize notebooks, and the <a href="https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html">Jupyter team has several containers you can use as a starting point</a></p>
 <h3>Making intention explicit</h3>
 <p>The markdown cells interspersed in your notebooks should have more than just analysis of the results. You should define <em>why</em> you chose this process in the first place. I would recommend doing this <em>before</em> running code, because for a failed analysis it's something that easily falls by the wayside. But true negatives are important too, so document everything! Rose et al. published <a href="https://arxiv.org/abs/1810.08055">a series of heuristics on reproducibility in Jupyter</a> which goes into more detail on these points, as well as a few other issues touched in this article.</p>
 <h3>Naming conventions and asynchronous workflows</h3>

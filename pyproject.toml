@@ -2,7 +2,7 @@
 name = "Portfolio"
 version = "0.3.0"
 description = ""
-license = "CCPL"
+license = "MIT"
 authors = ["Dal Williams <dendrondal@protonmail.com>"]
 
 [tool.poetry.urls]

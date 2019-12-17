@@ -25,45 +25,39 @@
 <h2>Stack (Second Attempt)</h2>
 <p>-<strong>Frozen Flask</strong> Allows for a normal Flask development workflow, followed by running a command line tool to build the entire web app to a folder structure ideal for serving as a static site. </p>
 <p>-<strong>FlatPages</strong> Pairs well with Freeze for blog hosting, assuming you use markdown to write your posts. Just lead off your blog post with a short yaml description of post metadata. This can be read directly into Jinja for formatting, just have this in your post:</p>
-<div class="codehilite"><pre><span></span><span class="n">title</span><span class="o">:</span> <span class="n">Generative</span> <span class="n">Models</span>
-<span class="n">description</span><span class="o">:</span> <span class="n">A</span> <span class="n">meetup</span> <span class="n">presentation</span> <span class="n">I</span> <span class="n">gave</span> <span class="n">over</span> <span class="n">the</span> <span class="n">history</span> <span class="n">and</span> <span class="n">state</span><span class="o">-</span><span class="n">of</span><span class="o">-</span><span class="n">the</span><span class="o">-</span><span class="n">art</span> <span class="n">of</span> <span class="n">generative</span> <span class="n">models</span>
-<span class="n">thumbnail</span><span class="o">:</span> <span class="n">https</span><span class="o">://</span><span class="n">upload</span><span class="o">.</span><span class="na">wikimedia</span><span class="o">.</span><span class="na">org</span><span class="sr">/wikipedia/commons/1/18/</span><span class="n">Bayes</span><span class="o">%</span><span class="mi">27</span><span class="n">_Theorem_MMB_01</span><span class="o">.</span><span class="na">jpg</span>
-<span class="n">tags</span><span class="o">:</span> <span class="n">ML</span><span class="o">,</span> <span class="n">Teaching</span><span class="o">,</span> <span class="n">GANs</span><span class="o">,</span> <span class="n">Bayes</span><span class="err">&#39;</span> <span class="n">Theorem</span><span class="o">,</span> <span class="n">VAEs</span><span class="o">,</span> <span class="n">Spam</span> <span class="n">Filtering</span><span class="o">,</span> <span class="n">Chemistry</span>
-</pre></div>
-
-
+<pre><code>title: Generative Models
+description: A meetup presentation I gave over the history and state-of-the-art of generative models
+thumbnail: https://upload.wikimedia.org/wikipedia/commons/1/18/Bayes%27_Theorem_MMB_01.jpg
+tags: ML, Teaching, GANs, Bayes' Theorem, VAEs, Spam Filtering, Chemistry
+</code></pre>
 <p>Assuming you have a pages directory in your application root, the flask app can be as simple as this:</p>
-<div class="codehilite"><pre><span></span>app = Flask(__name__)
-app.config.from_pyfile(&#39;settings.cfg&#39;)
+<pre><code>app = Flask(__name__)
+app.config.from_pyfile('settings.cfg')
 pages = FlatPages(app)
 freezer = Freezer(app)
 
-@app.route(&#39;/&#39;)
+@app.route('/')
 def main_page():
-    return render_template(&#39;index.html&#39;, pages=pages)
+    return render_template('index.html', pages=pages)
 
-@app.route(&#39;/&lt;path:path&gt;/&#39;)
+@app.route('/&lt;path:path&gt;/')
 def render_post(path):
     page = pages.get_or_404(path)
-    return render_template(&#39;post.html&#39;, page=page)
-</pre></div>
-
-
+    return render_template('post.html', page=page)
+</code></pre>
 <p>with the following Jinja to render the content. Note that the yaml notations in the markdown can be used as attributes within Jinja:</p>
-<div class="codehilite"><pre><span></span><span class="cp">{%</span>  <span class="k">for</span> <span class="nv">page</span> <span class="k">in</span> <span class="nv">pages</span> <span class="cp">%}</span>
-    <span class="nt">&lt;a</span> <span class="na">href=</span><span class="cp">{{</span> <span class="nv">url_for</span><span class="o">(</span><span class="s2">&quot;render_post&quot;</span><span class="o">,</span> <span class="nv">path</span><span class="o">=</span><span class="nv">page.path</span><span class="o">)</span> <span class="cp">}}</span><span class="err">&gt;</span>
-        <span class="s">&lt;div</span> <span class="na">class=</span><span class="s">&quot;post&quot;</span><span class="nt">&gt;</span>
-            <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;thumbnail&quot;</span><span class="nt">&gt;</span>
-                <span class="nt">&lt;img</span> <span class="na">style=</span><span class="s">&quot;width:150px; height:150px; margin-left: 5%; margin-top: 5%; margin-bottom: 5%;&quot;</span> <span class="na">src=</span><span class="cp">{{</span> <span class="nv">page.thumbnail</span> <span class="cp">}}</span> <span class="s">alt</span><span class="nt">&gt;</span>
-             <span class="nt">&lt;/div&gt;</span>
-         <span class="nt">&lt;h3</span> <span class="na">style=</span><span class="s">&quot;margin-top:0; font-size:95%; alignment: center&quot;</span><span class="nt">&gt;</span><span class="cp">{{</span> <span class="nv">page.title</span> <span class="cp">}}</span><span class="nt">&lt;/h3&gt;</span>
-        <span class="nt">&lt;h4</span> <span class="na">style=</span><span class="s">font-size:60%</span><span class="nt">&gt;</span><span class="cp">{{</span> <span class="nv">page.description</span> <span class="cp">}}</span><span class="nt">&lt;/h4&gt;</span>
-        <span class="nt">&lt;/div&gt;</span>
-    <span class="nt">&lt;/a&gt;</span>
-<span class="cp">{%</span>  <span class="k">endfor</span> <span class="cp">%}</span>
-</pre></div>
-
-
+<pre><code>{%  for page in pages %}
+    &lt;a href={{ url_for("render_post", path=page.path) }}&gt;
+        &lt;div class="post"&gt;
+            &lt;div class="thumbnail"&gt;
+                &lt;img style="width:150px; height:150px; margin-left: 5%; margin-top: 5%; margin-bottom: 5%;" src={{ page.thumbnail }} alt&gt;
+             &lt;/div&gt;
+         &lt;h3 style="margin-top:0; font-size:95%; alignment: center"&gt;{{ page.title }}&lt;/h3&gt;
+        &lt;h4 style=font-size:60%&gt;{{ page.description }}&lt;/h4&gt;
+        &lt;/div&gt;
+    &lt;/a&gt;
+{%  endfor %}
+</code></pre>
 <p>And that's it! The markdown is rendered to HTML, with the option of adding  extensions, and compiled to a neat folder with all your assets and pages. Full credit to <a href="https://blog-byjohnyang.herokuapp.com/flask-website/">John Yang</a> for his tutorial on the subject. Once I had that structure, it's back to AWS:</p>
 <p>-<strong>Amazon S3</strong> A static website can be directly hosted using two S3 buckets: one for the content itself, and one for redirects. As per usual, with the help of Route 53, you can then link it to your domain name. There is a very <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/website-hosting-custom-domain-walkthrough.html">helpful guide</a> for doing so readily available. </p>
 <h2>Conclusions</h2>

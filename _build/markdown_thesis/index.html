@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title></title>
+		<title>Lessons Learned from Writing a PhD Dissertation in Markdown</title>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="../static/assets/css/main.css" />
@@ -9,26 +9,29 @@
 		<noscript><link rel="stylesheet" href="../static/assets/css/noscript.css" /></noscript>
 	</head>
 	<body class="is-preload">
-        <p>When researching ways to write my dissertation, I ended up settling on <a href="https://github.com/tompollard/phd_thesis_markdown">Tom Pollard's thesis template</a>. I was excited at the prospect of avoiding gigantic, unstable word files, being able to break down this massive work into more manageable chunks, and utilizing all the great features of modern text editors to make markdown writing easier (intellisense, code folding, and syntax highlighting, for starters). However, this project was not without its pain points. For anyone else who ends up going this route, I'd like to share some of the ups and downs of this journey.</p>
+        <h1>Lessons Learned from Writing a PhD Dissertation in Markdown</h1>
+<p>When researching ways to write my dissertation, I ended up settling on <a href="https://github.com/tompollard/phd_thesis_markdown">Tom Pollard's thesis template</a>. I was excited at the prospect of avoiding gigantic, unstable word files, being able to break down this massive work into more manageable chunks, and utilizing all the great features of modern text editors to make markhttps://www.needpix.com/photo/286807/papers-stack-heap-documents-business-paperwork-information-stacked-researchdown writing easier (intellisense, code folding, and syntax highlighting, for starters). However, this project was not without its pain points. For anyone else who ends up going this route, I'd like to share some of the ups and downs of this journey.</p>
 <h2>The unavoidable behemoth that is LaTeX</h2>
 <p>I started this project with no desire to learn LaTeX. However, I ended up having to write a decent amount of it by hand. First of all, bear in mind that even though it is a mature technology, <a href="https://tex.stackexchange.com/questions/313768/why-getting-this-error-tlmgr-unknown-directive">there are still several painful bugs in LaTeX distros</a>. First off, here is something that I wish I had earlier: <a href="https://tex.stackexchange.com/questions/1092/how-to-install-vanilla-texlive-on-debian-or-ubuntu">a guide to installing a stable variant of TeXLive</a>. This is by far the most useful installation tutorial I have found for TexLive, helping you to properly install packages with tlmgr and avoid the dreaded <a href="https://github.com/tompollard/phd_thesis_markdown/issues">Error 34</a>. That being said, I was never able to get successful PDF compilation on my Ubuntu machine, I had to switch over to Mac Yosemite to get a PDF that actually had pictures, which are a pretty key part of a scientific thesis...</p>
 <p><img alt="" src="https://thumbs.gfycat.com/ThankfulUnkemptHydatidtapeworm-small.gif" /></p>
 <p>Worse still, LaTeX error messages are quite cryptic. One of the strangest recurring issues that I found was a <a href="https://github.com/jgm/pandoc/issues/5801">single, 0.5 pt. horizontal line</a> in a table that broke the entire compilation. Many STEM dissertations tend to use horizontal figures, which are thankfully quite easy to do. First off, in the <code>preamble.tex</code> file, insert <code>\usepackage{rotate}</code> and <code>\usepackage{pdfpages}</code> somewhere before <code>\begin{document}</code>. Then, wherever you need a horizontal figure, replace the traditional markdown syntax with this:</p>
-<p>```latex
-\begin{landscape}</p>
-<p>\begin{sidewaysfigure}
-    \hypertarget{fig:<LABEL>}{%
-        \includegraphics{<PATH_TO_IMAGE>}
-        \caption[<SHORT_CAPTION>]{<CAPTION>}
-        \label{fig:<LABEL>}
+<pre><code class="latex">\begin{landscape}
+
+\begin{sidewaysfigure}
+    \hypertarget{fig:LABEL}{%
+        \includegraphics{PATH_TO_IMAGE}
+        \caption[SHORT_CAPTION]{CAPTION}
+        \label{fig:LABEL}
     }
-\end{sidewaysfigure}</p>
-<p>%Repeat for additional sideways figures</p>
-<p>\end{landscape}
-```</p>
-<p>Here, <LABEL> is what you'll use to reference this in the main text, using <code>@fig:&lt;LABEL&gt;</code>. This should take care of your image needs, but images are unfortunately nowhere near as problematic as tables. Note that this will put page numbers on the left side of every page. If you want to have them at the bottom of your page, put this in your preamble:</p>
-<p><code>latex
-\fancypagestyle{sideways}{
+\end{sidewaysfigure}
+
+%Repeat for additional sideways figures
+
+\end{landscape}
+</code></pre>
+
+<p>Here, LABEL is what you'll use to reference this in the main text, using <code>@fig:LABEL</code>. This should take care of your image needs, but images are unfortunately nowhere near as problematic as tables. Note that this will put page numbers on the left side of every page. If you want to have them at the bottom of your page, put this in your preamble:</p>
+<pre><code class="latex">\fancypagestyle{sideways}{
 \fancyhf{} %Clears the header/footer
 \fancyfoot{% Footer
 \makebox[\textwidth][r]{% Right
@@ -38,7 +41,9 @@
         \rotatebox{90}{\thepage}}}}}}% Rotate counter-clockwise
 \renewcommand{\headrulewidth}{0pt}% No header rule
 \renewcommand{\footrulewidth}{0pt}% No footer rule
-}</code></p>
+}
+</code></pre>
+
 <p>Now, just add <code>\pagestyle{sideways}</code> before <code>begin{landscape}</code> and <code>\pagestyle{plain}</code> after <code>end{landscape}</code> and you'll have page numbers centered at the bottom of your landscape pages.</p>
 <h2>Dealing with Large Tables</h2>
 <p>Just because a table looks nice in markdown doesn't mean it's going to look correct in its PDF form. Often, the text in column headers or cells overlaps, or the spacing between columns doesn't make sense. Thankfully, Pandoc has its own custom  table syntax that allows for line breaks. My recommended workflow to do this is as follows:</p>

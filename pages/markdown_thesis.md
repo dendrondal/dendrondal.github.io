@@ -1,6 +1,10 @@
-# Lessons Learned from Writing a PhD Thesis in Markdown
+title: Lessons Learned from Writing a PhD Dissertation in Markdown
+thumbnail: https://storage.needpix.com/rsynced_images/papers-576385_1280.png
+tags: [Science Writing, LaTeX, Markdown, Make]
 
-When researching ways to write my dissertation, I ended up settling on [Tom Pollard's thesis template](https://github.com/tompollard/phd_thesis_markdown). I was excited at the prospect of avoiding gigantic, unstable word files, being able to break down this massive work into more manageable chunks, and utilizing all the great features of modern text editors to make markdown writing easier (intellisense, code folding, and syntax highlighting, for starters). However, this project was not without its pain points. For anyone else who ends up going this route, I'd like to share some of the ups and downs of this journey.
+#Lessons Learned from Writing a PhD Dissertation in Markdown
+
+When researching ways to write my dissertation, I ended up settling on [Tom Pollard's thesis template](https://github.com/tompollard/phd_thesis_markdown). I was excited at the prospect of avoiding gigantic, unstable word files, being able to break down this massive work into more manageable chunks, and utilizing all the great features of modern text editors to make markhttps://www.needpix.com/photo/286807/papers-stack-heap-documents-business-paperwork-information-stacked-researchdown writing easier (intellisense, code folding, and syntax highlighting, for starters). However, this project was not without its pain points. For anyone else who ends up going this route, I'd like to share some of the ups and downs of this journey.
 
 ## The unavoidable behemoth that is LaTeX
 I started this project with no desire to learn LaTeX. However, I ended up having to write a decent amount of it by hand. First of all, bear in mind that even though it is a mature technology, [there are still several painful bugs in LaTeX distros](https://tex.stackexchange.com/questions/313768/why-getting-this-error-tlmgr-unknown-directive). First off, here is something that I wish I had earlier: [a guide to installing a stable variant of TeXLive](https://tex.stackexchange.com/questions/1092/how-to-install-vanilla-texlive-on-debian-or-ubuntu). This is by far the most useful installation tutorial I have found for TexLive, helping you to properly install packages with tlmgr and avoid the dreaded [Error 34](https://github.com/tompollard/phd_thesis_markdown/issues). That being said, I was never able to get successful PDF compilation on my Ubuntu machine, I had to switch over to Mac Yosemite to get a PDF that actually had pictures, which are a pretty key part of a scientific thesis...
@@ -13,10 +17,10 @@ Worse still, LaTeX error messages are quite cryptic. One of the strangest recurr
 \begin{landscape}
 
 \begin{sidewaysfigure}
-    \hypertarget{fig:<LABEL>}{%
-        \includegraphics{<PATH_TO_IMAGE>}
-        \caption[<SHORT_CAPTION>]{<CAPTION>}
-        \label{fig:<LABEL>}
+    \hypertarget{fig:LABEL}{%
+        \includegraphics{PATH_TO_IMAGE}
+        \caption[SHORT_CAPTION]{CAPTION}
+        \label{fig:LABEL}
     }
 \end{sidewaysfigure}
 
@@ -25,7 +29,7 @@ Worse still, LaTeX error messages are quite cryptic. One of the strangest recurr
 \end{landscape}
 ```
 
-Here, <LABEL> is what you'll use to reference this in the main text, using ```@fig:<LABEL>```. This should take care of your image needs, but images are unfortunately nowhere near as problematic as tables. Note that this will put page numbers on the left side of every page. If you want to have them at the bottom of your page, put this in your preamble:
+Here, LABEL is what you'll use to reference this in the main text, using ```@fig:LABEL```. This should take care of your image needs, but images are unfortunately nowhere near as problematic as tables. Note that this will put page numbers on the left side of every page. If you want to have them at the bottom of your page, put this in your preamble:
 
 ```latex
 \fancypagestyle{sideways}{
