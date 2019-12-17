@@ -7,7 +7,6 @@ import sys
 app = Flask(__name__)
 app.config.from_pyfile('settings.cfg')
 pages = FlatPages(app)
-freezer = Freezer(app)
 
 
 @app.route('/')
@@ -29,7 +28,5 @@ def render_post(path):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1 and sys.argv[1] == 'build':
-        freezer.freeze()
-    else:
-        app.run(port=8080)
+    from elsa import cli
+    cli(app, base_url='https://dalwilliams.info')

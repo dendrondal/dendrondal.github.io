@@ -1,0 +1,14 @@
+language: python
+python:
+- 3.7
+script:
+- python application.py freeze
+deploy:
+  skip_cleanup: true
+  script: python website.py deploy --no-freeze --push
+  on:
+    branch: master
+    repo: dendrondal/dendrondal.github.io
+env:
+  global:
+    secure: HMrE/t/XHIn3rVxWkm1BzlqcG+QC7swTNUX/y+0R1wCSLQT7J3s1fidwPO4tDRmqcxRwt/e7aAjMoYRtwn4kj3JLjGuvdBDaMvDBpo3BHtp3h7rR7LOiZNEqaroF4fWqrUVz+WvVNGMKBAPIzexbsw1QTnc1rwH/8BeNky8KMTOScNkw4Up67ektvSvSpzLuH91XAs05Ie3bK79mXTh+KsPVr/swjJs7kIn//8quBS+KL0I8/iRYJixD+dPPefTcSIhEeQBSLC7mKKsknw6a2hw4ggeej9f8bMHKRFV7Prf/KBWwjt/P9uYP3846aEvW8sRuooZxEhOwWTi7nwn3si6g/Vtul/i/WCftsZd/E2ePNnkvFn7877PGScKtXk2t4BkggbQ5Lyq5EMJxlN3FnenXz0/qh5/6YsFti3d411kxIyhAQLnvWWBQ90QirkI2rLt2RxBFzfieNzLM5jA2WWP4gxgElxij7yjLiBEmyver6yy4vuWK7joxumoBak9ItcRB0wl7BRKOdSuVUul2kX3PLmRdtR5/GxgfgW+3DqDDm4+VR6N7/exUKjifKdcC6IPNFDnG5fw3sdt5OMJg8aJ097tDLofDEg5HubTZvHZhEC/BR0u5jaPMBrH9gzPqFCSRjCMwRIoBWWvXZjaYLFekvywnSeCcrbEWGr66rMg=
