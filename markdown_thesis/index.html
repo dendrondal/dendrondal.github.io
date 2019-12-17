@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Lessons Learned from Writing a PhD Dissertation in Markdown</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../static/assets/css/main.css" />
+        <link rel="icon" href="../static/images/favicon.ico">
+		<noscript><link rel="stylesheet" href="../static/assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+        <h1>Lessons Learned from Writing a PhD Dissertation in Markdown</h1>
+<p>When researching ways to write my dissertation, I ended up settling on <a href="https://github.com/tompollard/phd_thesis_markdown">Tom Pollard's thesis template</a>. I was excited at the prospect of avoiding gigantic, unstable word files, being able to break down this massive work into more manageable chunks, and utilizing all the great features of modern text editors to make markhttps://www.needpix.com/photo/286807/papers-stack-heap-documents-business-paperwork-information-stacked-researchdown writing easier (intellisense, code folding, and syntax highlighting, for starters). However, this project was not without its pain points. For anyone else who ends up going this route, I'd like to share some of the ups and downs of this journey.</p>
+<h2>The unavoidable behemoth that is LaTeX</h2>
+<p>I started this project with no desire to learn LaTeX. However, I ended up having to write a decent amount of it by hand. First of all, bear in mind that even though it is a mature technology, <a href="https://tex.stackexchange.com/questions/313768/why-getting-this-error-tlmgr-unknown-directive">there are still several painful bugs in LaTeX distros</a>. First off, here is something that I wish I had earlier: <a href="https://tex.stackexchange.com/questions/1092/how-to-install-vanilla-texlive-on-debian-or-ubuntu">a guide to installing a stable variant of TeXLive</a>. This is by far the most useful installation tutorial I have found for TexLive, helping you to properly install packages with tlmgr and avoid the dreaded <a href="https://github.com/tompollard/phd_thesis_markdown/issues">Error 34</a>. That being said, I was never able to get successful PDF compilation on my Ubuntu machine, I had to switch over to Mac Yosemite to get a PDF that actually had pictures, which are a pretty key part of a scientific thesis...</p>
+<p><img alt="" src="https://thumbs.gfycat.com/ThankfulUnkemptHydatidtapeworm-small.gif" /></p>
+<p>Worse still, LaTeX error messages are quite cryptic. One of the strangest recurring issues that I found was a <a href="https://github.com/jgm/pandoc/issues/5801">single, 0.5 pt. horizontal line</a> in a table that broke the entire compilation. Many STEM dissertations tend to use horizontal figures, which are thankfully quite easy to do. First off, in the <code>preamble.tex</code> file, insert <code>\usepackage{rotate}</code> and <code>\usepackage{pdfpages}</code> somewhere before <code>\begin{document}</code>. Then, wherever you need a horizontal figure, replace the traditional markdown syntax with this:</p>
+<pre><code class="latex">\begin{landscape}
+
+\begin{sidewaysfigure}
+    \hypertarget{fig:LABEL}{%
+        \includegraphics{PATH_TO_IMAGE}
+        \caption[SHORT_CAPTION]{CAPTION}
+        \label{fig:LABEL}
+    }
+\end{sidewaysfigure}
+
+%Repeat for additional sideways figures
+
+\end{landscape}
+</code></pre>
+
+<p>Here, LABEL is what you'll use to reference this in the main text, using <code>@fig:LABEL</code>. This should take care of your image needs, but images are unfortunately nowhere near as problematic as tables. Note that this will put page numbers on the left side of every page. If you want to have them at the bottom of your page, put this in your preamble:</p>
+<pre><code class="latex">\fancypagestyle{sideways}{
+\fancyhf{} %Clears the header/footer
+\fancyfoot{% Footer
+\makebox[\textwidth][r]{% Right
+  \rlap{\hspace{.75cm}% Push out of margin by \footskip
+    \smash{% Remove vertical height
+      \raisebox{4.87in}{% Raise vertically
+        \rotatebox{90}{\thepage}}}}}}% Rotate counter-clockwise
+\renewcommand{\headrulewidth}{0pt}% No header rule
+\renewcommand{\footrulewidth}{0pt}% No footer rule
+}
+</code></pre>
+
+<p>Now, just add <code>\pagestyle{sideways}</code> before <code>begin{landscape}</code> and <code>\pagestyle{plain}</code> after <code>end{landscape}</code> and you'll have page numbers centered at the bottom of your landscape pages.</p>
+<h2>Dealing with Large Tables</h2>
+<p>Just because a table looks nice in markdown doesn't mean it's going to look correct in its PDF form. Often, the text in column headers or cells overlaps, or the spacing between columns doesn't make sense. Thankfully, Pandoc has its own custom  table syntax that allows for line breaks. My recommended workflow to do this is as follows:</p>
+<ol>
+<li>Create a markdown file <em>outside</em> of the source directory (perhaps in a directory called "bin" or "scratch" for clarity). Let's call it <code>tables.md</code> for this tutorial</li>
+<li>Paste your problem tables (in markdown form) into this file</li>
+<li>Run <code>pandoc -t markdown+multiline_tables -o cleaned_tables.md tables.md</code></li>
+<li>Paste the new multi-line tables where the original tables would be in your document</li>
+</ol>
+<p>There are some special cases where this won't be sufficient. Even though <a href="https://github.com/martisak/pandoc-shortcaption">there's a great package for figure short captions</a>, there's no such thing for tables as of yet. In your bin/scratch directory, run <code>pandoc -H ../styles/preamble.tex -o tables.tex tables.md</code>. Now, take the LaTeX version of your table, and insert square brackets between <code>\caption</code> and the curly brace. This can also help with sideways tables, as you just need to wrap the latex table with <code>\begin{landscape}</code> and <code>\end{landscape}</code>.</p>
+<h2>Other Tips</h2>
+<p>My <a href="https://github.com/dendrondal/phd_thesis_markdown">fork of the original template</a> uses several other Pandoc filters, including <a href="https://github.com/tomduck/pandoc-xnos">xnos</a> and <a href="https://github.com/martisak/pandoc-shortcaption">shortcaptions</a>. These cut down on the amount of LaTeX needed. It should be said, however, that I wasn't able to get the autocomplete feature of fignos to work (<code>+@fig</code> and <code>*@fig</code>, respectively). This can be fixed by a simple find and replace, with +@ being replaced with Fig. \@.  This also works for equations and tables, just be mindful that you're using the proper amount of whitespace. Other tips:</p>
+<ul>
+<li>Install a stable version of TexLive (or your distro of choice) EARLY to avoid headaches down the road. </li>
+<li>Make sure tlmgr works properly to install all your packages. Check <code>which tlmgr</code> both with and without sudo permissions to make sure its pointing to your install, which is especially important on Debian-based systems.</li>
+<li>Compile early and often. As mentioned previously, there are many strange quirks with PDF compilation.</li>
+<li>Make sure to find you which version of Pandoc you're using (<code>pandoc --version</code>). This is especially necessary if you have conda in your PATH, as it installs its own version. My Mac was using 1.1.3, instead of the current 2.7!</li>
+<li>I would highly recommend VSCode as an editor. It has phenomenal markdown syntax highlighting and previews with Markdown All in One, intellisense completion of figure referencing, and very nice cite-while-you-write extensions including Citation Picker for Zotero and Pandoc Citer. It also has version control tools built in for easier merging, and a user-level dictionary where you can put technical words that would originally be flagged by the spell checker (also an extension).</li>
+</ul>
+<h2>Conclusions and Caveats</h2>
+<p>So, the main question one might ask is whether this is all worth it. I would still say yes, despite the major headaches and long nights this caused. First off, Word is in my personal opinion, absolutely terrible. Between the difficulty of things as simple as moving tables and images without messing up your paragraphs, the instability with large documents with tons of images, hogging of RAM, and the potential to completely corrupt your entire dissertation thanks to EndNote (literally happened to me the night before my undergrad thesis submission), I would absolutely not recommend it. I believe <a href="https://www.literatureandlatte.com/scrivener/overview">Scrivener</a> is a pretty great alternative to Word/OpenOffice/Pages in terms of large, modular documents, but it's not available for Linux, and I'm not sure if it provides the full functionality of this workflow (auto figure/table/equation numbering, Git compatibility, etc.).</p>
+<p>All that being said, with the amount of time I spent messing with LaTeX, I probably could have just as easily <a href="https://github.com/sergiocorreia/panflute">written my own Pandoc filters in Python</a> to emulate some missing functionality with HTML conversion (<code>\listoffigures</code> and short captions in particular), then styled the whole document with CSS. <a href="https://www.princexml.com/">Prince</a>, which can be used as a Pandoc pdf-engine, includes CSS styling. I'm not sure if this would calculate line breaks and image placement as well as Xelatex, but would be worth a try to prevent fonts and horizontal lines breaking a 200 page document. </p>
+<p>To anyone embarking on their dissertation writing journey, I wish you the best, and want to remind you that there is a light at the end of the tunnel!</p>
+    </body>
