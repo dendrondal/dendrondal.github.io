@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: http://ogp.me/ns#">
+<head>
+  <meta charset="UTF-8" />
+  <title>Thoughts on Reproducibility in Data Science | Dal&#39;s Portfolio</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,400i,600,600i%7CSource+Code+Pro:400,400i,600" />
+  <link rel="stylesheet" href="/static/m-dark.css" />
+  <link rel="icon" href="/images/favicon.ico" type="image/x-ico" />
+  <link rel="canonical" href="/thoughts-on-reproducibility-in-data-science.html" />
+  <link href="/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Dal&#39;s Portfolio" />
+  <link href="/feeds/blog.atom.xml" type="application/atom+xml" rel="alternate" title="Dal&#39;s Portfolio | Blog" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#353535" />
+  <meta name="description" content="Thoughts on how to make exploratory data analysis with Jupyter Notebooks more reproducible" />
+  <meta name="twitter:site" content="@dendrondal" />
+  <meta property="og:site_name" content="Dal&#39;s Portfolio" />
+  <meta property="og:title" content="Thoughts on Reproducibility in Data Science" />
+  <meta name="twitter:title" content="Thoughts on Reproducibility in Data Science" />
+  <meta property="og:url" content="/thoughts-on-reproducibility-in-data-science.html" />
+  <meta property="og:description" content="Coming from a natural science background, it’s unsurprising that I have some pretty strong opinions on reproducibilty. Most data science textbooks will emphasize the issues of imbalanced data sets, overfitting, and stratification, but this only scratches the surface of potential issues encountered in reproducibility. A great deal of human …" />
+  <meta name="twitter:description" content="Coming from a natural science background, it’s unsurprising that I have some pretty strong opinions on reproducibilty. Most data science textbooks will emphasize the issues of imbalanced data sets, overfitting, and stratification, but this only scratches the surface of potential issues encountered in reproducibility. A great deal of human …" />
+  <meta name="twitter:card" content="summary" />
+  <meta property="og:type" content="article" />
+</head>
+<body>
+<header><nav id="navigation">
+  <div class="m-container">
+    <div class="m-row">
+      <a href="/" id="m-navbar-brand" class="m-col-t-9 m-col-m-none m-left-m"><img src="/images/tree.jpg" alt="" />Dal&#39;s Portfolio</a>
+      <a id="m-navbar-show" href="#navigation" title="Show navigation" class="m-col-t-3 m-hide-m m-text-right"></a>
+      <a id="m-navbar-hide" href="#" title="Hide navigation" class="m-col-t-3 m-hide-m m-text-right"></a>
+      <div id="m-navbar-collapse" class="m-col-t-12 m-show-m m-col-m-none m-right-m">
+        <div class="m-row">
+          <ol class="m-col-t-12 m-col-m-none">
+            <li><a href="/pages/about-me.html">About</a></li>
+            <li><a href="https://github.com/dendrondal">GitHub</a></li>
+            <li><a href="https://linkedin.com/in/dal-williams">LinkedIn</a></li>
+            <li><a href="https://twitter.com/dendrondal">Twitter</a></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav></header>
+<main>
+<div class="m-container">
+  <div class="m-row">
+    <article class="m-col-m-10 m-nopadb">
+      <header>
+        <h1><a href="/thoughts-on-reproducibility-in-data-science.html" rel="bookmark" title="Permalink to Thoughts on Reproducibility in Data Science">
+          <time class="m-date" datetime="2019-03-19T00:00:00-05:00">
+            Mar <span class="m-date-day">19</span> 2019
+          </time>
+          Thoughts on Reproducibility in Data Science
+        </a></h1>
+        <p>Coming from a natural science background, it’s unsurprising that I have
+        some pretty strong opinions on reproducibilty. Most data science
+        textbooks will emphasize the issues of imbalanced data sets,
+        overfitting, and stratification, but this only scratches the surface of
+        potential issues encountered in reproducibility. A great deal of human …</p>
+      </header>
+      <div class="m-clearfix-l"></div>
+<!-- content -->
+<p>Coming from a natural science background, it’s unsurprising that I have
+some pretty strong opinions on reproducibilty. Most data science
+textbooks will emphasize the issues of imbalanced data sets,
+overfitting, and stratification, but this only scratches the surface of
+potential issues encountered in reproducibility. A great deal of human
+error is possible in a machine learning system that can trip up even the
+smartest scientists. This is very much an unsolved problem that quite
+likely lacks a one-size-fits-all solution. That said, I’d like to focus
+on one of the major pain points in any pipeline: exploratory data
+analysis and feature engineering.</p>
+<section id="notebook-blues">
+<h2>Notebook Blues</h2>
+<p>Joel Grus’s <a href="https://docs.google.com/presentation/d/1n2RlMdmv1p25Xy5thJUhkKGvjtV-dkAIsUXP-AL4ffI/edit#slide=id.g3a428e2eb8_0_241">talk on why he dislikes
+notebooks</a>
+raises a lot of the more important issues with this concept. Notebooks
+lend themselves to a scripting style of programming, which would be fine
+in the EDA stage were it not for the issues of hidden states between
+cells. This can lead to some pretty poor conclusions if there are
+transformations in your data caused by these hidden states. However,
+being able to experiment with different features/graphing allows for
+maximum productivity. There’s unfortunately not a happy medium (to my
+knowledge) between the flexibility and interactivity provided by
+notebooks and the reproducibility provided by a traditional software
+engineering workflow. This problem is compounded when you have multiple
+people working asynchronously on a project, even with the help of
+version control. I’d like to share some of my observations and thoughts
+on this issue, given it’s importance to the data science workflow.</p>
+</section>
+<section id="analysis-as-a-dag">
+<h2>Analysis as a DAG</h2>
+<p>There are several pieces of tech (Make, Airflow,
+Luigi) which utilize <a href="https://drivendata.github.io/cookiecutter-data-science/">analysis as a directed acyclic
+graph</a>. This
+is an incredibly useful abstraction, though the actual shape of the DAG
+will certainly evolve over time. One of my first attempts to remedy
+reproducibility issues using this paradigm is to <em>only</em> use code that
+has been previously defined in well-commented, version controlled python
+files, which are imported into the notebook used for data analysis.
+However, this limits the ability to add new steps. Every time you decide
+you want a new transformation, you have to add it to the python module
+and then restart the kernel. This is especially bad if your pipeline
+includes a large amount of computational overhead to load the data in
+the first place, which is quite common. This can be partially fixed by
+using the autoreload magic method into a cell:</p>
+<pre>%load_ext autoreload
+%autoreload 2</pre>
+<p>This will make sure that every time you execute a cell, it re-imports
+everything from your module. You can also exclude certain modules with
+<code>%aimport -not_this_module</code> to help with load time.The
+<a href="https://ipython.readthedocs.io/en/stable/config/extensions/autoreload.html?highlight=autoreload">documentation</a>,
+however, points out that this doesn’t always work when modifying module
+code. That brings us to the next approach:</p>
+</section>
+<section id="tddd">
+<h2>TDDD</h2>
+<p>I recently read a textbook that focues on <a href="https://www.amazon.com/Thoughtful-Machine-Learning-Python-Test-Driven-ebook/dp/B01N12DLF9">test-driven data
+science</a>.
+Though I’m not a big fan of pigeonholing myself into using
+object-oriented programming for every single model, this does actually
+create a decent amount of <em>extensibility</em> in the data analysis phase.
+The idea is to define a class which encapuslates any feature engineering
+and graphing in a .py file within a module. You can then open up a
+Jupyter notebook, and import that class from that module, where you can
+then define a subclass:</p>
+<pre class="m-code"><span class="k">class</span> <span class="nc">eda</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">new_transformation</span><span class="p">():</span>
+        <span class="c1">#transformations go here</span>
+        <span class="k">pass</span>
+
+<span class="n">predictor</span> <span class="o">=</span> <span class="n">eda</span><span class="p">()</span>
+<span class="n">predictor</span><span class="o">.</span><span class="n">plot_pca</span><span class="p">()</span></pre>
+<p>The idea here is to extend the feature engineering in such a way that
+the core behavior is not affected, as an exception will be thrown
+otherwise. This also remedies the previous issue of kernel reloads, as
+the behavior of your ETL can be modified without affecting any imports.
+Then, once you decide which transformations to keep, you just throw
+those into your base class, marking your results in your notebook.</p>
+<p>Some of the problems with this approach should be apparent quite
+quickly. First off, it feels unnatural compared to the normal scripting
+approach taken with notebooks. Secondly, if you need to modify the child
+class, you’ll have to re-execute cells out of order, or take another
+very strange approach:</p>
+<pre class="m-code"><span class="k">def</span> <span class="nf">newer_transformation</span><span class="p">():</span>
+    <span class="c1">#new logic defined in a later cell</span>
+    <span class="k">pass</span>
+
+<span class="n">eda</span><span class="o">.</span><span class="n">featurename</span> <span class="o">=</span> <span class="n">newer_transformation</span></pre>
+<p>It works, but it’s quite an unnatural paradigm. The nice part about this
+is you can call <code>dir(model)</code> to keep track of what’s been added. Note
+that there is also the <a href="http://www.tdda.info/pdf/tdda-quickref.pdf">test-driven data analysis
+library</a> which abstracts
+away many of the assertions used in the <em>Thoughtful Machine Learning</em>
+approach, but I personally have no experience using this library. Their
+documentation is quite promising, however, so I’d recommend checking it
+out if you like this approach.</p>
+<p>##More general tips ###Making requirements explicit A very useful
+extension to include in your notebooks is the
+<a href="https://github.com/rasbt/watermark">watermark</a> extension:</p>
+<pre class="m-code"><span class="o">%</span><span class="n">load_extension</span> <span class="n">watermark</span>
+<span class="o">%</span><span class="n">watermark</span> <span class="o">--</span><span class="n">iversions</span></pre>
+<p>This is basically a mini requirements.txt for a notebook, which can help
+people later down the road to reproduce your analysis. As a more
+advanced approach, Docker can be used to containerize notebooks, and the
+<a href="https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html">Jupyter team has several containers you can use as a starting
+point</a></p>
+<section id="making-intention-explicit">
+<h3>Making intention explicit</h3>
+<p>The markdown cells interspersed in your notebooks should have more than just analysis of the results. You should
+define <em>why</em> you chose this process in the first place. I would
+recommend doing this <em>before</em> running code, because for a failed
+analysis it’s something that easily falls by the wayside. But true
+negatives are important too, so document everything! Rose et
+al. published <a href="https://arxiv.org/abs/1810.08055">a series of heuristics on reproducibility in
+Jupyter</a> which goes into more
+detail on these points, as well as a few other issues touched in this
+article.</p>
+</section>
+<section id="naming-conventions-and-asynchronous-workflows">
+<h3>Naming conventions and asynchronous workflows</h3>
+<p>Though <a href="https://www.zepl.com/">ZEPL</a> attempts to fix this, asynchronous work
+in jupyter notebooks is generally ill-advised. This is unless you’re
+hosting them on your own server with continuous integration built-in,
+which creates another layer of technical debt. The phenomenal
+<a href="http://drivendata.github.io/cookiecutter-data-science/">cookiecutter data
+science</a>
+article sums this up well:</p>
+<blockquote>
+When we use notebooks in our work, we often subdivide the notebooks
+folder. For example, notebooks/exploratory contains initial
+explorations, whereas notebooks/reports is more polished work that
+can be exported as html to the reports directory. Since notebooks are
+challenging objects for source control (e.g., diffs of the json are
+often not human-readable and merging is near impossible), we
+recommended not collaborating directly with others on Jupyter
+notebooks. There are two steps we recommend for using notebooks
+effectively:</blockquote>
+<blockquote>
+<ul>
+<li>Follow a naming convention that shows the owner and the order the
+analysis was done in. We use the format --.ipynb (e.g.,
+0.3-bull-visualize-distributions.ipynb).</li>
+<li>Refactor the good parts. Don’t write code to do the same task in
+multiple notebooks. If it’s a data preprocessing task, put it in
+the pipeline at src/data/make_dataset.py and load data from
+data/interim. If it’s useful utility code, refactor it to src.</li>
+</ul>
+</blockquote>
+<p>That brings us to one final consideration:</p>
+</section>
+</section>
+<section id="papermill">
+<h2>Papermill</h2>
+<p>Stripe <a href="https://stripe.com/blog/reproducible-research">wrote a blog post on reproducible data
+science</a> a few years
+ago. Their approach was twofold: 1. They created a pre-commit hook that
+serves notebooks statically as HTML, and strips results from all cells.
+This ensures back-to-front execution of notebooks. 2. They created
+common entry points for the queries that produced their analysis data.
+The next year, a NumFOCUS project called
+<a href="https://github.com/nteract/papermill">papermill</a> was created that
+standardizes this process, with quite a few added benefits. First off,
+it fixes the point-of-entry problem with accessing data by allowing
+direct linkage to Azure/S3 buckets via CLI. It also allows back-to-front
+execution by including a testing framework for individual notebooks, as
+well as a form of integration testing by allowing notebooks to be
+executed in sequence if needed. This ties into the Analysis as a DAG
+paradigm, as you can run different tranformations based on the result of
+different experiments. Did your neural network overfit your data?
+Increase the dropout or trim the layers and try again automatically. Or
+vice-versa!</p>
+<figure>
+<img alt="Explicit variables are best variables!" src="https://github.com/nteract/papermill/raw/master/docs/img/enable_parameters.gif" />
+<figcaption>Explicit variables are best variables!</figcaption>
+</figure>
+<p>Two super useful features in this library are parameterization of cells
+and recording of output. Parameterization allows variables to be
+explicitly defined within cells. This increases transparency and allows
+for rapid iteration, as the parameters can be changed on subsequent runs
+using the CLI. Recording allows for cell output to be stored, helping
+with the hidden state issue that notebooks so often encounter. These are
+godsends for large teams. Papermill allows you to load multiple
+notebooks, and load parameters and outputs (including graphs) from all
+notebooks as a dataframe, so you can get a meta-analysis of what
+everyone in the team has tried!
+<a href="https://medium.com/netflix-techblog/scheduling-notebooks-348e6c14cfd6">Netflix</a>
+has made great use of papermill, so I’d recommend reading their entries
+for additional information.</p>
+</section>
+<section id="conclusions">
+<h2>Conclusions</h2>
+<p>Some people may think these approaches are overkill, but
+good process at this stage can lead to better production systems down
+the line. Take a little more time with your EDA, and you’ll save
+yourself some technical debt in the long run. And as always, not one
+process works for everyone, so I’ve tried to give an overview of the
+notebook reproducibility landscape rather than dictating from an ivory
+tower. That being said, there are a few things to keep in mind no matter
+what approach you prefer (aka <strong>TL;DR</strong>):</p>
+<ol>
+<li>Use some variant of cookiecutter</li>
+<li>Name your notebooks well</li>
+<li>Be explicit in each step, and remember true negatives are also
+valuable</li>
+<li>Refactor important code into version-controlled python modules when
+possible</li>
+</ol>
+<p>Thanks for reading!</p>
+</section>
+<!-- /content -->
+      <footer>
+        <p>Posted by <a href="/author/jon-steven-dal-williams.html">Jon Steven Dal Williams</a> on <time datetime="2019-03-19T00:00:00-05:00">Tue 19 March 2019</time> in <a href="/category/blog.html">Blog</a>. Tags: <a href="/tag/jupyter.html">Jupyter</a>, <a href="/tag/bash.html">Bash</a>, <a href="/tag/reproducibility.html">reproducibility</a>, <a href="/tag/papermill.html">Papermill</a>, <a href="/tag/airflow.html">Airflow</a>, <a href="/tag/luigi.html">Luigi</a>.</p>
+      </footer>
+    </article>
+    <nav class="m-navpanel m-col-m-2">
+      <h3>Categories</h3>
+      <ol class="m-block-bar-m">
+        <li><a href="/category/blog.html">Blog</a></li>
+        <li><a href="/category/projects.html">Projects</a></li>
+        <li><a href="/category/talks.html">Talks</a></li>
+        <li><a href="/category/tutorials.html">Tutorials</a></li>
+      </ol>
+      <h3>Tag cloud</h3>
+      <ul class="m-tagcloud">
+        <li class="m-tag-3"><a href="/tag/airflow.html">Airflow</a></li>
+        <li class="m-tag-3"><a href="/tag/altair.html">Altair</a></li>
+        <li class="m-tag-3"><a href="/tag/aws.html">AWS</a></li>
+        <li class="m-tag-3"><a href="/tag/bash.html">Bash</a></li>
+        <li class="m-tag-3"><a href="/tag/bayesian-stats.html">Bayesian stats</a></li>
+        <li class="m-tag-3"><a href="/tag/chatbots.html">chatbots</a></li>
+        <li class="m-tag-3"><a href="/tag/chemistry.html">chemistry</a></li>
+        <li class="m-tag-3"><a href="/tag/cnns.html">CNNs</a></li>
+        <li class="m-tag-3"><a href="/tag/computer-vision.html">computer vision</a></li>
+        <li class="m-tag-5"><a href="/tag/flask.html">Flask</a></li>
+        <li class="m-tag-3"><a href="/tag/functional-programming.html">functional programming</a></li>
+        <li class="m-tag-3"><a href="/tag/gans.html">GANs</a></li>
+        <li class="m-tag-3"><a href="/tag/jupyter.html">Jupyter</a></li>
+        <li class="m-tag-3"><a href="/tag/keras.html">Keras</a></li>
+        <li class="m-tag-3"><a href="/tag/latex.html">LaTeX</a></li>
+        <li class="m-tag-3"><a href="/tag/luigi.html">Luigi</a></li>
+        <li class="m-tag-3"><a href="/tag/make.html">Make</a></li>
+        <li class="m-tag-3"><a href="/tag/markdown.html">Markdown</a></li>
+        <li class="m-tag-3"><a href="/tag/microsoft.html">Microsoft</a></li>
+        <li class="m-tag-5"><a href="/tag/mission-driven-data-science.html">Mission-driven data science</a></li>
+        <li class="m-tag-3"><a href="/tag/mongodb.html">MongoDB</a></li>
+        <li class="m-tag-3"><a href="/tag/pandas.html">Pandas</a></li>
+        <li class="m-tag-3"><a href="/tag/papermill.html">Papermill</a></li>
+        <li class="m-tag-3"><a href="/tag/pytorch.html">PyTorch</a></li>
+        <li class="m-tag-3"><a href="/tag/reproducibility.html">reproducibility</a></li>
+        <li class="m-tag-3"><a href="/tag/rest.html">REST</a></li>
+        <li class="m-tag-3"><a href="/tag/science-writing.html">Science Writing</a></li>
+        <li class="m-tag-3"><a href="/tag/scikit-learn.html">SciKit Learn</a></li>
+        <li class="m-tag-3"><a href="/tag/spacy.html">Spacy</a></li>
+        <li class="m-tag-3"><a href="/tag/sqalchemy.html">SQAlchemy</a></li>
+        <li class="m-tag-3"><a href="/tag/sqlite.html">SQLite</a></li>
+        <li class="m-tag-3"><a href="/tag/swagger.html">Swagger</a></li>
+        <li class="m-tag-3"><a href="/tag/tensorflow.html">TensorFlow</a></li>
+        <li class="m-tag-5"><a href="/tag/tutorials.html">tutorials</a></li>
+        <li class="m-tag-3"><a href="/tag/vaes.html">VAEs</a></li>
+        <li class="m-tag-3"><a href="/tag/wild-python.html">wild python</a></li>
+      </ul>
+    </nav>
+  </div>
+</div>
+</main>
+<footer><nav>
+  <div class="m-container">
+    <div class="m-row">
+      <div class="m-col-l-10 m-push-l-1">
+        <p>Dal's Portfolio. Powered by <a href="https://getpelican.com">Pelican</a> and <a href="https://mcss.mosra.cz">m.css</a>.</p>
+      </div>
+    </div>
+  </div>
+</nav></footer>
+</body>
+</html>

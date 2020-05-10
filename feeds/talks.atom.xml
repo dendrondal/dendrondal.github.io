@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Dal's Portfolio - Talks</title><link href="/" rel="alternate"></link><link href="/feeds/talks.atom.xml" rel="self"></link><id>/</id><updated>2019-03-09T00:00:00-06:00</updated><entry><title>Generative Models</title><link href="/generative-models.html" rel="alternate"></link><published>2019-03-09T00:00:00-06:00</published><updated>2019-03-09T00:00:00-06:00</updated><author><name>Jon Steven Dal Williams</name></author><id>tag:None,2019-03-09:/generative-models.html</id><summary type="html">&lt;p&gt;A meetup presentation I gave over the history and state-of-the-art of generative models&lt;/p&gt;
+</summary><content type="html">&lt;iframe src="https://docs.google.com/presentation/d/e/2PACX-1vQuL0LbhsKycRvvnKm8k078FB54TIRHExVL8jH8VKmzMGe4GrtTiFdgslrh27q8PUMXkQFiCKg9Cq1n/embed?start=false&amp;loop=false&amp;delayms=3000"
+            frameborder="0" width="1440" height="839"
+            allowfullscreen="true" mozallowfullscreen="true"
+            webkitallowfullscreen="true"&gt;
+&lt;/iframe&gt;</content><category term="Talks"></category><category term="GANs"></category><category term="Bayesian stats"></category><category term="VAEs"></category><category term="chemistry"></category></entry></feed>

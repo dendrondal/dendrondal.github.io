@@ -1,181 +1,472 @@
-<!DOCTYPE HTML>
-<!--
-	Dimension by HTML5 UP
-	html5up.net | @ajlkn
-	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
--->
-<html xmlns:alignment="http://www.w3.org/1999/xhtml">
-	<head>
-		<title>Dal</title>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="../static/assets/css/main.css" />
-        <link rel="icon" href="../static/images/favicon.ico">
-		<noscript><link rel="stylesheet" href="../static/assets/css/noscript.css" /></noscript>
-	</head>
-	<body class="is-preload">
+<!DOCTYPE html>
+<html lang="en" prefix="og: http://ogp.me/ns#">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dal&#39;s Portfolio</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,400i,600,600i%7CSource+Code+Pro:400,400i,600" />
+  <link rel="stylesheet" href="/static/m-dark.css" />
+  <link rel="icon" href="/images/favicon.ico" type="image/x-ico" />
+  <link href="/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Dal&#39;s Portfolio" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#353535" />
+  <meta name="twitter:site" content="@dendrondal" />
+  <meta property="og:site_name" content="Dal&#39;s Portfolio" />
+  <meta property="og:title" content="Dal&#39;s Portfolio" />
+  <meta name="twitter:title" content="Dal&#39;s Portfolio" />
+  <meta property="og:url" content="/" />
+  <meta name="twitter:card" content="summary" />
+  <meta property="og:type" content="website" />
+</head>
+<body>
+<header><nav id="navigation">
+  <div class="m-container">
+    <div class="m-row">
+      <a href="/" id="m-navbar-brand" class="m-col-t-9 m-col-m-none m-left-m"><img src="/images/tree.jpg" alt="" />Dal&#39;s Portfolio</a>
+      <a id="m-navbar-show" href="#navigation" title="Show navigation" class="m-col-t-3 m-hide-m m-text-right"></a>
+      <a id="m-navbar-hide" href="#" title="Hide navigation" class="m-col-t-3 m-hide-m m-text-right"></a>
+      <div id="m-navbar-collapse" class="m-col-t-12 m-show-m m-col-m-none m-right-m">
+        <div class="m-row">
+          <ol class="m-col-t-12 m-col-m-none">
+            <li><a href="/pages/about-me.html">About</a></li>
+            <li><a href="https://github.com/dendrondal">GitHub</a></li>
+            <li><a href="https://linkedin.com/in/dal-williams">LinkedIn</a></li>
+            <li><a href="https://twitter.com/dendrondal">Twitter</a></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav></header>
+<main>
+<div class="m-container">
+  <div class="m-row">
+    <div class="m-col-m-10">
+      <article>
+        <header>
+          <h1><a href="/migrating-from-keras-to-pytorch-in-2020.html" rel="bookmark" title="Permalink to Migrating from Keras to PyTorch in 2020">
+            <time class="m-date" datetime="2020-05-05T00:00:00-05:00">
+              May <span class="m-date-day">05</span> 2020
+            </time>
+            Migrating from Keras to PyTorch in 2020
+          </a></h1>
+          <p><em>Note: this specifically applies to PyTorch 1.5 and tf.Keras 2.1.0. As
+          long as the final number in the version is the same, this should still
+          be applicable, but otherwise, YMMV</em></p>
+          <p>While completing my fellowship at <a href="insightdatascience.com">Insight</a>,
+          I reached a point in my <a href="github.com/dendrondal/CIf3R">recyclable classification
+          project</a> where …</p>
+        </header>
+        <div class="m-clearfix-l"></div>
+<!-- content -->
+<p><em>Note: this specifically applies to PyTorch 1.5 and tf.Keras 2.1.0. As
+long as the final number in the version is the same, this should still
+be applicable, but otherwise, YMMV</em></p>
+<p>While completing my fellowship at <a href="insightdatascience.com">Insight</a>,
+I reached a point in my <a href="github.com/dendrondal/CIf3R">recyclable classification
+project</a> where I wanted to implement a
+<a href="https://sorenbouma.github.io/blog/oneshot/">siamese network</a> to improve the generalizability of my model,
+while requiring less training data. The ad-hoc siamese networks I
+created in Keras had acceptable results, but were certainly not
+production-ready. I began looking on <a href="paperswithcode.com">papers with code</a> for a more
+SOTA model, and realized that Keras implementations are few and far
+between. In fact, PyTorch seems to have <a href="https://paperswithcode.com/trends">exploded in popularity</a> to
+the point where it is now the #1 framework on papers with code. With
+this in mind, I decided it was time to start learning PyTorch.</p>
+<section id="why-move">
+<h2>Why move?</h2>
+<p>In addition to the predominance of PyTorch on paperswithcode, there are
+several advantages it offers. Back when I began learning Keras,
+TensorFlow was the dominant framework partially due to easier
+productionalization of models using tf.Serve. However, since then, the
+productionalization gap <a href="https://engineering.fb.com/ai-research/announcing-pytorch-1-0-for-both-research-and-production/">appears to be
+closing</a>.
+In addition, PyTorch comes with out-of-the-box asynchronous behavior
+when loading, whereas this still has to be specified and configured when
+using tf.Datasets. TensorBoard was, and still is, the predominant
+monitoring solution for model training, but it’s now fully supported by
+PyTorch. Finally, in my opinion, TensorFlow has made some rather strange
+api decisions, whereas PyTorch seems to bear more similarity to Numpy.</p>
+</section>
+<section id="defining-the-computation-graph">
+<h2>Defining the computation graph</h2>
+<p>Since Keras has both the sequential and functional api, it’s worth doing
+a comparison of both with the preferred way of instantiating a PyTorch
+network. Here, let’s use a <a href="https://www.google.com/books/edition/Deep_Learning_with_Python/Yo3CAQAACAAJ?hl=en">simple feedforward
+MLP</a>
+as an example:</p>
+<pre class="m-code"><span class="c1">#Keras sequential api</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">64</span><span class="p">,)))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;softmax&#39;</span><span class="p">))</span>
 
-		<!-- Wrapper -->
-			<div id="wrapper">
+<span class="c1">#Keras functional api</span>
+<span class="n">input_layer</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">64</span><span class="p">,))</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">)(</span><span class="n">input_layer</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;softmax&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
 
-				<!-- Header -->
-					<header id="header">
-						<div class="profile-image">
-                            <img src="../static/images/headshot.jpg" alt class="profile-image">
-						</div>
-						<div class="content">
-							<div class="inner">
-								<h1>Dal Williams</h1>
-								<p>Machine learning engineer who helps models go from prototype to product.
-                                Incurably curious, persistent and passionate. </p>
-							</div>
-						</div>
-						<nav>
-							<ul>
-								<li><a href="#intro">Principles</a></li>
-								<li><a href="#work">Blog</a></li>
-								<li><a href="#about">About</a></li>
-								<li><a href="#contact">Contact</a></li>
-								<!--<li><a href="#elements">Elements</a></li>-->
-							</ul>
-						</nav>
-					</header>
+<span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">input_layer</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 
-				<!-- Main -->
-					<div id="main">
+<span class="c1">#Pytorch example</span>
+<span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dense1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dense2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span></pre>
+<p>The obvious difference here is that the standard practice for PyTorch
+models is encapsulation into a class, and instantiating the parent
+<code>Module</code> class. Another less obvious difference is that both the input
+and output sizes of each layer have to be specified in PyTorch. Other
+than that, it’s a pretty straightforward difference. Let’s try a less
+trivial example that’s more suited to the Keras functional API: a
+siamese network for image similarity classification, based on the
+<a href="https://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf">original paper</a> with several convolutional layers taken out for
+the sake of length. This employs custom layers, shared weights, and
+gives an overview of how a multi-input, single output neural network can
+be implemented in the two frameworks.</p>
+<pre class="m-code"><span class="c1">#Keras example</span>
+<span class="n">input_shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">105</span><span class="p">,</span> <span class="mi">105</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 
-						<!-- Intro -->
-                            <article id="intro">
-                                <h2 class="major">Principles</h2>
-                                <p>This page hopes to give you a summary of what drives me. Take it as a contract of what to expect when hired. Certainly not all ideas are originally mine, and many are taken from those who inspire me.</p>
-                                <p><strong>People &gt; Product &gt; Stack</strong></p>
-                                <p>One of the most important lessons I've learned by listening to various entrepreneurs is that you invest in people, not ideas. This stems from the belief that ideas are cheap and follow-through is expensive. As a second point to this, product means little without customers. Therefore, execution depends on having empathy for the customer, be it an end-user or another business. This empathy is also vital within the organization, because great teams make for great companites. As for the final point, though I certainly have favorite languages/frameworks/databases, I try to not make everything look like a nail just because I have a hammer. Depending on what's needed, I'm adaptable and love to learn. In the end, I just want to make the best version of whatever needs to be made given the allotted time.</p>
-                                <p><strong>Growth Mindset</strong></p>
-                                <p>Some hard lessons I learned in grad school is that the pursuit of knowledge is unending, and that mistakes are inevitable. I've learned to not take the latter personally, and I've come to love the former. One thing I've learned from this is the importance of living in the present, to learn from previous mistakes, but not let them define me, and to only worry about the future insofar as finishing projects on time. Other than that, as long as I adopt a pattern of continuous improvement and learning, I know everything else will work out.</p>
-                                <p><strong>Self-awareness</strong></p>
-                                <p>This may sound cliche, but I consider it important enough to warrant mention. I've learned to appreciate all of the opportunity I've been given, and all of the people that have had an impact on me over the years. There have been countless educators, advisors, and friends that have built me up and affirmed my growth, inspiring me be the best version of myself. Thus, I have no delusions about being a &quot;self-made man,&quot; and rather attempt to express humility in my interactions with colleagues. Therefore, I endeavor to own up to my mistakes, help build up those around me rather than attack them when they falter, and learn from the difference in knowledge and perspectives from those around me.</p>
-                                <p><strong>Family First</strong></p>
-                                <p>In this same vein, I will invariably prioritize a family emergency over coming into work, as I wouldn't be who I am without them. That being said, I am perfectly capable of remote work, and can do so when needed. This principle also extends into work-life balance, as I won't compromise the quality of my marriage for my career. In addition, my work performance is far better when not working 70-100 hour weeks, and I assume most employers prefer quality over quantity.</p>
-                                <p><strong>Other Principles</strong></p>
-                                <p><em>Listening:</em> A key factor in determining customer and company needs, and a quality that I pride myself on.</p>
-                                <p><em>Prioritizing:</em> I was my advisor's first graduate student, which gave me quite a bit of choice in which project to pursue. However, this resulted in several instances where I had to choose whether to abandon a project or push through. This gave me a great deal of practice in snatching low-hanging fruit while keeping the big picutre in mind.</p>
-                                <p><em>Being proactive:</em> There are several projects over the course of my career which certainly didn't fall into my lap, and I instead had to take initiative and present results to a superior, convincing them of the value of said project. I believe this level of autonomy, foresight, and negotiation skills will be an asset to anyone who hires me.</p>
-                                <p><em>Flexibility:</em> I have quite a bit of experience in environments that are out of my comfort zone. Whether this involves collaborating with people from disciplines I know little about, or being immersed in a country where my main language isn't spoken, I've learned to be flexible. I'll meet the other party in the middle rather than getting frustrated, and I can make on-the-fly adjustments in the wake of unexpected events.</p>
-                            </article>
-                            <!-- Work -->
-							<article id="work">
-                                <h2 class="major">Blog</h2>
-                                    <div class="fa-border" style="width: 100%"></div>
-                                        <div class="ls">
-                                            
-                                                <a href=/reproducibility/>
-                                                    <div class="post">
-                                                        <div class="thumbnail">
-                                                            <img style="width:150px; height:150px; margin-left: 5%; margin-top: 5%; margin-bottom: 5%;" src=https://upload.wikimedia.org/wikipedia/commons/c/c6/Topological_Ordering.svg alt>
-                                                        </div>
-                                                        <h3 style="margin-top:0; font-size:95%; alignment: center">Reproducibility in Data Science</h3>
-                                                        <h4 style=font-size:60%>Thoughts on how to make exploratory data analysis with Jupyter Notebooks more reproducible</h4>
-                                                    </div>
-                                                </a>
-                                            
-                                                <a href=/localvore/>
-                                                    <div class="post">
-                                                        <div class="thumbnail">
-                                                            <img style="width:150px; height:150px; margin-left: 5%; margin-top: 5%; margin-bottom: 5%;" src=https://cdn.pixabay.com/photo/2016/04/14/14/47/farmers-market-1329008_960_720.jpg alt>
-                                                        </div>
-                                                        <h3 style="margin-top:0; font-size:95%; alignment: center">Localvore</h3>
-                                                        <h4 style=font-size:60%>An ML-driven approach to help people eat locally and minimize food waste</h4>
-                                                    </div>
-                                                </a>
-                                            
-                                                <a href=/itertools/>
-                                                    <div class="post">
-                                                        <div class="thumbnail">
-                                                            <img style="width:150px; height:150px; margin-left: 5%; margin-top: 5%; margin-bottom: 5%;" src=https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg alt>
-                                                        </div>
-                                                        <h3 style="margin-top:0; font-size:95%; alignment: center">A wild itertools appeared!</h3>
-                                                        <h4 style=font-size:60%>A walkthrough and deployment use cases of the itertools standard library</h4>
-                                                    </div>
-                                                </a>
-                                            
-                                                <a href=/making_this_website/>
-                                                    <div class="post">
-                                                        <div class="thumbnail">
-                                                            <img style="width:150px; height:150px; margin-left: 5%; margin-top: 5%; margin-bottom: 5%;" src=https://www.brandeps.com/logo-download/F/Flask-01.png alt>
-                                                        </div>
-                                                        <h3 style="margin-top:0; font-size:95%; alignment: center">Making this Website</h3>
-                                                        <h4 style=font-size:60%></h4>
-                                                    </div>
-                                                </a>
-                                            
-                                                <a href=/markdown_thesis/>
-                                                    <div class="post">
-                                                        <div class="thumbnail">
-                                                            <img style="width:150px; height:150px; margin-left: 5%; margin-top: 5%; margin-bottom: 5%;" src=https://storage.needpix.com/rsynced_images/papers-576385_1280.png alt>
-                                                        </div>
-                                                        <h3 style="margin-top:0; font-size:95%; alignment: center">Lessons Learned from Writing a PhD Dissertation in Markdown</h3>
-                                                        <h4 style=font-size:60%></h4>
-                                                    </div>
-                                                </a>
-                                            
-                                                <a href=/dssg/>
-                                                    <div class="post">
-                                                        <div class="thumbnail">
-                                                            <img style="width:150px; height:150px; margin-left: 5%; margin-top: 5%; margin-bottom: 5%;" src=https://c.pxhere.com/photos/28/df/waterfall_rocks_stone_flow_nature_water_landscape_stream-1200570.jpg alt>
-                                                        </div>
-                                                        <h3 style="margin-top:0; font-size:95%; alignment: center">Data Science for Social Good</h3>
-                                                        <h4 style=font-size:60%>A rundown of several projects taking data-driven approaches to effective altruism.</h4>
-                                                    </div>
-                                                </a>
-                                            
-                                                <a href=/generative_models/>
-                                                    <div class="post">
-                                                        <div class="thumbnail">
-                                                            <img style="width:150px; height:150px; margin-left: 5%; margin-top: 5%; margin-bottom: 5%;" src=https://upload.wikimedia.org/wikipedia/commons/1/18/Bayes%27_Theorem_MMB_01.jpg alt>
-                                                        </div>
-                                                        <h3 style="margin-top:0; font-size:95%; alignment: center">Generative Models</h3>
-                                                        <h4 style=font-size:60%>A meetup presentation I gave over the history and state-of-the-art of generative models</h4>
-                                                    </div>
-                                                </a>
-                                            
-                                        </div>
-                            </article>
-						<!-- About -->
-							<article id="about">
-								<h2 class="major">About</h2>
-                            
-								<p>I'm a chemistry PhD candidate with a wonderful wife and two cute cats. I grew up in east TN, close to Chattanooga. I went to UTK for undergrad, getting a chemistry major and a business minor, then came to Ole Miss to get a PhD with Dr. Davita Watkins. My research background has been a little all over the place, starting in bioinformatics and moving into semiconductors and biocompatible polymers, both with an emphasis on non-covalent interactions. I decided to take a scientific programming course during my second year of grad school, and got hooked on Python. After stumbling upon machine learning through my final project in this course, I started stocking my bookshelves with ML, software engineering, and math books. I eventually ended up at a small startup as a data scientist, where I was able to dive into a legacy codebase and gain real-world deployment and SQL experience. This cemented my desire to work with data, and made me realize how much I like to study the process behind data science, i.e. the pipeline that extends from data collection to product deployment. This has since been labelled as a machine learning engineer, which is the job description I tend to most closely align with. My wife and I love to play board games (Scythe is a personal favorite), travel, and go hiking/camping. When I'm not in lab, programming, or doing fun things with my wife, I enjoy gaming. StarCraft was my original favorite, which eventually gave way to DOTA, Hearthstone, and Overwatch. I tend to be very easy-going, and pride myself on being a good listener.</p>
-							</article>
+<span class="n">img_input</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">)</span>
+<span class="n">left_input</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">)</span>
+<span class="n">right_input</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">)</span>
 
-						<!-- Contact -->
-							<article id="contact">
-								<h2 class="major">Contact</h2>
-								<ul class="icons">
-									<li><a href="https://twitter.com/dendrondal" class="icon fa-twitter"><span class="label">Twitter</span></a></li>
-									<li><a href="https://bitbucket.org/dendrondal/" class="icon fa-bitbucket"><span class="label">BitBucket</span></a></li>
-                                    <li><a href="https://www.linkedin.com/in/dal-williams-18a8b45a/" class="icon fa-linkedin"><span class="label">LinkedIn</span></a></li>
+<span class="n">x</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">64</span><span class="p">,(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">)(</span><span class="n">img_input</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">MaxPooling2D</span><span class="p">()(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">Flatten</span><span class="p">()(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">Dropout</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">out</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="mi">2048</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;sigmoid&quot;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
 
-                                </ul>
-							</article>
+<span class="n">twin</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">img_input</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
 
-					</div>
+<span class="c1"># get the image embeddings, sharing weights between the two networks</span>
+<span class="n">encoded_l</span> <span class="o">=</span> <span class="n">twin</span><span class="p">(</span><span class="n">left_input</span><span class="p">)</span>
+<span class="n">encoded_r</span> <span class="o">=</span> <span class="n">twin</span><span class="p">(</span><span class="n">right_input</span><span class="p">)</span>
 
-				<!-- Footer -->
-					<footer id="footer">
-						<p class="copyright">&copy; Dal Williams, 2019. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
-					</footer>
+<span class="c1"># merge two encoded inputs with the l1 distance between them</span>
+<span class="n">L1_layer</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">L1_distance</span> <span class="o">=</span> <span class="n">L1_layer</span><span class="p">([</span><span class="n">encoded_l</span><span class="p">,</span> <span class="n">encoded_r</span><span class="p">])</span>
 
-			</div>
+<span class="n">prediction</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">)(</span><span class="n">L1_distance</span><span class="p">)</span>
 
-		<!-- BG -->
-			<div id="bg"></div>
+<span class="n">siamese_net</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">left_input</span><span class="p">,</span> <span class="n">right_input</span><span class="p">],</span> <span class="n">outputs</span><span class="o">=</span><span class="n">prediction</span><span class="p">)</span>
 
-		<!-- Scripts -->
-			<script src="../static/assets/js/jquery.min.js"></script>
-			<script src="../static/assets/js/browser.min.js"></script>
-			<script src="../static/assets/js/breakpoints.min.js"></script>
-			<script src="../static/assets/js/util.js"></script>
-			<script src="../static/assets/js/main.js"></script>
+<span class="c1"># The same model in PyTorch    correct = 0</span>
+<span class="k">class</span> <span class="nc">SiameseNetwork</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2048</span><span class="p">,</span> <span class="mi">2048</span><span class="p">)</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Sigmoid</span><span class="p">()</span>
+        <span class="p">)</span></pre>
+<p>Unlike Keras, convolutional layers in PyTorch have arguments in the
+order of
+<code>in_channel size, out_channels size, kernel_size, stride, padding</code>,
+with the default stride and padding being 1 and 0, respectively. You’re
+probably noticing that with the PyTorch model, we stopped around the
+<code>twin</code> definition in the Keras model. The reason being is that the
+biggest difference between keras and pytorch is how you train the model,
+aka the training loop.</p>
+</section>
+<section id="training-the-model">
+<h2>Training the model</h2>
+<p>Defining the model isn’t very different between Keras and PyTorch, but
+training the model certainly is. Rather than calling
+<code>model.compile()</code>, you instead define your forward pass as a method of
+your model. Also, your loss function, optimizer, and learning rate are
+usually defined in the training loop. Let’s start with the forward pass
+and training loop for our first MLP:</p>
+<pre class="m-code"><span class="c1"># Defining the forward pass. Note that this is a method of Model</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="c1"># F is an alias for torch.nn.functional</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span></pre>
+<p>This shows two methods of model creation: for the siamese model, we
+define the entire model intially, making the forward pass as simple as
+<code>return twin(x)</code>. With the MLP, we defined the layers individually.
+Which method is better definitely depends on your use case, but my
+intuition is that a neural network that can be drawn as a linear
+progression of layers lends itself well to the MLP method, whereas
+defining your entire model as an attribute works well for more advanced
+graphs such as ResNet/Inception type models, or models with multimodal
+input/outputs. Alright, so we have our model and how our data flows
+through it. The next step is training and evaluation. This is indeed far
+more code than is needed by using <code>callbacks</code> in Keras, but the
+training loop adds complexity in exchange for significantly more
+flexibility.</p>
+<pre class="m-code"><span class="c1"># train_loader is some predefined Torch DataLoader instance</span>
+<span class="c1"># device is your cpu/gpu name</span>
+<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">batch</span><span class="p">,</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_loader</span><span class="p">):</span>
+        <span class="c1"># Assuming X and y are torch tensors, you can also just call X.cuda() instead if</span>
+        <span class="c1"># you know you don&#39;t need to switch devices.</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">),</span> <span class="n">y</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="c1"># We re-instantiate the gradients during each iteration</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">y_hat</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">y_hat</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="c1"># Now we back-propagate</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="c1"># Report accuracy every 10 batches</span>
+        <span class="k">if</span> <span class="n">batch</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Loss of </span><span class="si">{</span><span class="n">loss</span><span class="si">}</span><span class="s1"> after </span><span class="si">{</span><span class="n">batch</span><span class="si">}</span><span class="s1"> epochs on training set&#39;</span><span class="p">)</span></pre>
+<p>The function above is meant to be used in a <code>for</code> loop with a preset
+number of epochs. Optimizers are called in a similar manner compared to
+Keras. Similar to the LearningRateScheduler in Keras’ callbacks, we now
+have several built-in <a href="https://pytorch.org/docs/stable/optim.html?highlight=scheduler#torch.optim.lr_scheduler.StepLR">adaptive learning
+rates</a>.
+We have our training function, now for the test one:</p>
+<pre class="m-code"><span class="c1"># Again, test_loader is a DataLoader instance</span>
+<span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">test_loader</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="n">test_loss</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">correct</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1"># We don&#39;t want to change the gradients, so we freeze the model here</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">test_loader</span><span class="p">:</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">),</span> <span class="n">y</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">y_hat</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="n">test_loss</span> <span class="o">+=</span> <span class="n">F</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">y_hat</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="s1">&#39;sum&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">y_hat</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># For binary classification</span>
+            <span class="c1"># For multiclass, pass keepdim=True above</span>
+            <span class="c1"># Now we format the actual target and compare it to the predicted one</span>
+            <span class="n">correct</span> <span class="o">+=</span> <span class="n">pred</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">pred</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
 
-	</body>
+    <span class="n">test_loss</span> <span class="o">/=</span> <span class="nb">len</span><span class="p">(</span><span class="n">test_loader</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Average loss: </span><span class="si">{</span><span class="n">test_loss</span><span class="si">}</span><span class="se">\n</span><span class="s1">Accuracy: </span><span class="si">{</span><span class="n">correct</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">test_loader</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></pre>
+<p>Now we have our model with its foward propagation method, a training
+function, and a testing function. We presume there is a data loading
+function in there somewhere as well. So the final step is putting it all
+together, either in script for or in a <code>main</code> function for CLI
+execution. Here is the last bit in script form:</p>
+<pre class="m-code"><span class="c1"># With Torch, we have to specify GPU/CPU computation</span>
+<span class="n">use_cuda</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda:0&quot;</span> <span class="k">if</span> <span class="n">use_cuda</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+<span class="c1"># First we load the model onto the GPU</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="c1"># Now we load our optimizer</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+<span class="c1"># Let&#39;s also apply a learning rate decay</span>
+<span class="n">scheduler</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">StepLR</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span>
+<span class="c1"># Now let&#39;s train for 100 epochs</span>
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+   <span class="n">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">)</span>
+   <span class="n">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">test_loader</span><span class="p">)</span>
+   <span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+<span class="c1">#Saving the weights of the model to a pickle file</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span> <span class="s1">&#39;torch_example.pt&#39;</span><span class="p">)</span></pre>
+<p>Whew, that’s a lot of code for a 3 layer MLP! Of course, this is only a
+starting point. You’ll probably want some kind of early stopping
+mechanism, monitoring with tensorboard or custom visualizations, a tqdm
+progress bar, and/or logging. In performing this excercise, I’m of the
+mind that the additional code is actually a good thing, as debugging
+becomes far easier as you can isolate the line causing the issue with a
+visual debugger (<em>cough</em> or a print statement <em>cough</em>), as opposed to
+Keras abstracting that complexity away.</p>
+<p>So this post doesn’t get too long, I’m going to direct you to <a href="https://github.com/dendrondal/CIf3R">the
+repository for my Insight project</a> if you want to see the siamese
+network in PyTorch. Overall, PyTorch is pretty great, and a smoother
+transition than I originally thought. I’ll have to see if this is just a
+honeymoon phase, but I figure there’s likely a reason there are so many
+converts as of late. Happy hacking, and thanks for reading!</p>
+</section>
+<!-- /content -->
+        <footer>
+          <p>Posted by <a href="/author/jon-steven-dal-williams.html">Jon Steven Dal Williams</a> on <time datetime="2020-05-05T00:00:00-05:00">Tue 05 May 2020</time> in <a href="/category/tutorials.html">Tutorials</a>. Tags: <a href="/tag/keras.html">Keras</a>, <a href="/tag/pytorch.html">PyTorch</a>, <a href="/tag/tensorflow.html">TensorFlow</a>, <a href="/tag/cnns.html">CNNs</a>, <a href="/tag/computer-vision.html">computer vision</a>, <a href="/tag/tutorials.html">tutorials</a>.</p>
+        </footer>
+      </article>
+      <article>
+        <header>
+          <h1><a href="/lessons-learned-from-writing-a-phd-dissertation-in-markdown.html" rel="bookmark" title="Permalink to Lessons Learned from Writing a PhD Dissertation in Markdown">
+            <time class="m-date" datetime="2019-11-26T00:00:00-06:00">
+              Nov <span class="m-date-day">26</span> 2019
+            </time>
+            Lessons Learned from Writing a PhD Dissertation in Markdown
+          </a></h1>
+          <p>When researching ways to write my dissertation, I ended up settling on
+          <a href="https://github.com/tompollard/phd_thesis_markdown">Tom Pollard’s thesis
+          template</a>. I was
+          excited at the prospect of avoiding gigantic, unstable word files, being
+          able to break down this massive work into more manageable chunks, and
+          utilizing all the great features of modern text …</p>
+        </header>
+        <footer>
+          <p>Posted by <a href="/author/jon-steven-dal-williams.html">Jon Steven Dal Williams</a> on <time datetime="2019-11-26T00:00:00-06:00">Tue 26 November 2019</time> in <a href="/category/projects.html">Projects</a>. Tags: <a href="/tag/science-writing.html">Science Writing</a>, <a href="/tag/latex.html">LaTeX</a>, <a href="/tag/markdown.html">Markdown</a>, <a href="/tag/make.html">Make</a>.</p>
+        </footer>
+        <div class="m-clearfix-l"></div>
+      </article>
+      <article>
+        <header>
+          <h1><a href="/a-wild-itertools-appeared.html" rel="bookmark" title="Permalink to A wild itertools appeared!">
+            <time class="m-date" datetime="2019-08-23T00:00:00-05:00">
+              Aug <span class="m-date-day">23</span> 2019
+            </time>
+            A wild itertools appeared!
+          </a></h1>
+          <p>A walkthrough and deployment use cases of the itertools standard library</p>
+        </header>
+        <footer>
+          <p>Posted by <a href="/author/jon-steven-dal-williams.html">Jon Steven Dal Williams</a> on <time datetime="2019-08-23T00:00:00-05:00">Fri 23 August 2019</time> in <a href="/category/blog.html">Blog</a>. Tags: <a href="/tag/wild-python.html">wild python</a>, <a href="/tag/functional-programming.html">functional programming</a>, <a href="/tag/tutorials.html">tutorials</a>.</p>
+        </footer>
+        <div class="m-clearfix-l"></div>
+      </article>
+      <article>
+        <header>
+          <h1><a href="/localvore-menu-planner.html" rel="bookmark" title="Permalink to Localvore Menu Planner">
+            <time class="m-date" datetime="2019-04-08T00:00:00-05:00">
+              Apr <span class="m-date-day">08</span> 2019
+            </time>
+            Localvore Menu Planner
+          </a></h1>
+          <p>An ML-driven approach to help people eat locally and minimize food waste</p>
+        </header>
+        <footer>
+          <p>Posted by <a href="/author/jon-steven-dal-williams.html">Jon Steven Dal Williams</a> on <time datetime="2019-04-08T00:00:00-05:00">Mon 08 April 2019</time> in <a href="/category/projects.html">Projects</a>. Tags: <a href="/tag/scikit-learn.html">SciKit Learn</a>, <a href="/tag/spacy.html">Spacy</a>, <a href="/tag/flask.html">Flask</a>, <a href="/tag/mission-driven-data-science.html">Mission-driven data science</a>, <a href="/tag/chatbots.html">chatbots</a>, <a href="/tag/altair.html">Altair</a>, <a href="/tag/mongodb.html">MongoDB</a>, <a href="/tag/pandas.html">Pandas</a>.</p>
+        </footer>
+        <div class="m-clearfix-l"></div>
+      </article>
+      <article>
+        <header>
+          <h1><a href="/thoughts-on-reproducibility-in-data-science.html" rel="bookmark" title="Permalink to Thoughts on Reproducibility in Data Science">
+            <time class="m-date" datetime="2019-03-19T00:00:00-05:00">
+              Mar <span class="m-date-day">19</span> 2019
+            </time>
+            Thoughts on Reproducibility in Data Science
+          </a></h1>
+          <p>Coming from a natural science background, it’s unsurprising that I have
+          some pretty strong opinions on reproducibilty. Most data science
+          textbooks will emphasize the issues of imbalanced data sets,
+          overfitting, and stratification, but this only scratches the surface of
+          potential issues encountered in reproducibility. A great deal of human …</p>
+        </header>
+        <footer>
+          <p>Posted by <a href="/author/jon-steven-dal-williams.html">Jon Steven Dal Williams</a> on <time datetime="2019-03-19T00:00:00-05:00">Tue 19 March 2019</time> in <a href="/category/blog.html">Blog</a>. Tags: <a href="/tag/jupyter.html">Jupyter</a>, <a href="/tag/bash.html">Bash</a>, <a href="/tag/reproducibility.html">reproducibility</a>, <a href="/tag/papermill.html">Papermill</a>, <a href="/tag/airflow.html">Airflow</a>, <a href="/tag/luigi.html">Luigi</a>.</p>
+        </footer>
+        <div class="m-clearfix-l"></div>
+      </article>
+      <article>
+        <header>
+          <h1><a href="/data-science-for-social-good.html" rel="bookmark" title="Permalink to Data Science for Social Good">
+            <time class="m-date" datetime="2019-03-09T00:00:00-06:00">
+              Mar <span class="m-date-day">09</span> 2019
+            </time>
+            Data Science for Social Good
+          </a></h1>
+          <p>A rundown of several projects taking data-driven approaches to effective altruism.</p>
+        </header>
+        <footer>
+          <p>Posted by <a href="/author/jon-steven-dal-williams.html">Jon Steven Dal Williams</a> on <time datetime="2019-03-09T00:00:00-06:00">Sat 09 March 2019</time> in <a href="/category/blog.html">Blog</a>. Tags: <a href="/tag/mission-driven-data-science.html">Mission-driven data science</a>, <a href="/tag/microsoft.html">Microsoft</a>.</p>
+        </footer>
+        <div class="m-clearfix-l"></div>
+      </article>
+      <article>
+        <header>
+          <h1><a href="/generative-models.html" rel="bookmark" title="Permalink to Generative Models">
+            <time class="m-date" datetime="2019-03-09T00:00:00-06:00">
+              Mar <span class="m-date-day">09</span> 2019
+            </time>
+            Generative Models
+          </a></h1>
+          <p>A meetup presentation I gave over the history and state-of-the-art of generative models</p>
+        </header>
+        <footer>
+          <p>Posted by <a href="/author/jon-steven-dal-williams.html">Jon Steven Dal Williams</a> on <time datetime="2019-03-09T00:00:00-06:00">Sat 09 March 2019</time> in <a href="/category/talks.html">Talks</a>. Tags: <a href="/tag/gans.html">GANs</a>, <a href="/tag/bayesian-stats.html">Bayesian stats</a>, <a href="/tag/vaes.html">VAEs</a>, <a href="/tag/chemistry.html">chemistry</a>.</p>
+        </footer>
+        <div class="m-clearfix-l"></div>
+      </article>
+      <article>
+        <header>
+          <h1><a href="/making-this-website.html" rel="bookmark" title="Permalink to Making this Website">
+            <time class="m-date" datetime="2019-02-17T00:00:00-06:00">
+              Feb <span class="m-date-day">17</span> 2019
+            </time>
+            Making this Website
+          </a></h1>
+          <p>I wanted to share some of the process used in creating this website. I’m
+          certainly not a frontend developer by any stretch of the imagination, so
+          this was a fully new experience for me. Yes, I had the option of
+          spinning up a squarespace or wordpress site, but where …</p>
+        </header>
+        <footer>
+          <p>Posted by <a href="/author/jon-steven-dal-williams.html">Jon Steven Dal Williams</a> on <time datetime="2019-02-17T00:00:00-06:00">Sun 17 February 2019</time> in <a href="/category/projects.html">Projects</a>. Tags: <a href="/tag/flask.html">Flask</a>, <a href="/tag/aws.html">AWS</a>, <a href="/tag/swagger.html">Swagger</a>, <a href="/tag/sqlite.html">SQLite</a>, <a href="/tag/sqalchemy.html">SQAlchemy</a>, <a href="/tag/rest.html">REST</a>.</p>
+        </footer>
+        <div class="m-clearfix-l"></div>
+      </article>
+    </div>
+    <nav class="m-navpanel m-col-m-2">
+      <h3>Categories</h3>
+      <ol class="m-block-bar-m">
+        <li><a href="/category/blog.html">Blog</a></li>
+        <li><a href="/category/projects.html">Projects</a></li>
+        <li><a href="/category/talks.html">Talks</a></li>
+        <li><a href="/category/tutorials.html">Tutorials</a></li>
+      </ol>
+      <h3>Tag cloud</h3>
+      <ul class="m-tagcloud">
+        <li class="m-tag-3"><a href="/tag/airflow.html">Airflow</a></li>
+        <li class="m-tag-3"><a href="/tag/altair.html">Altair</a></li>
+        <li class="m-tag-3"><a href="/tag/aws.html">AWS</a></li>
+        <li class="m-tag-3"><a href="/tag/bash.html">Bash</a></li>
+        <li class="m-tag-3"><a href="/tag/bayesian-stats.html">Bayesian stats</a></li>
+        <li class="m-tag-3"><a href="/tag/chatbots.html">chatbots</a></li>
+        <li class="m-tag-3"><a href="/tag/chemistry.html">chemistry</a></li>
+        <li class="m-tag-3"><a href="/tag/cnns.html">CNNs</a></li>
+        <li class="m-tag-3"><a href="/tag/computer-vision.html">computer vision</a></li>
+        <li class="m-tag-5"><a href="/tag/flask.html">Flask</a></li>
+        <li class="m-tag-3"><a href="/tag/functional-programming.html">functional programming</a></li>
+        <li class="m-tag-3"><a href="/tag/gans.html">GANs</a></li>
+        <li class="m-tag-3"><a href="/tag/jupyter.html">Jupyter</a></li>
+        <li class="m-tag-3"><a href="/tag/keras.html">Keras</a></li>
+        <li class="m-tag-3"><a href="/tag/latex.html">LaTeX</a></li>
+        <li class="m-tag-3"><a href="/tag/luigi.html">Luigi</a></li>
+        <li class="m-tag-3"><a href="/tag/make.html">Make</a></li>
+        <li class="m-tag-3"><a href="/tag/markdown.html">Markdown</a></li>
+        <li class="m-tag-3"><a href="/tag/microsoft.html">Microsoft</a></li>
+        <li class="m-tag-5"><a href="/tag/mission-driven-data-science.html">Mission-driven data science</a></li>
+        <li class="m-tag-3"><a href="/tag/mongodb.html">MongoDB</a></li>
+        <li class="m-tag-3"><a href="/tag/pandas.html">Pandas</a></li>
+        <li class="m-tag-3"><a href="/tag/papermill.html">Papermill</a></li>
+        <li class="m-tag-3"><a href="/tag/pytorch.html">PyTorch</a></li>
+        <li class="m-tag-3"><a href="/tag/reproducibility.html">reproducibility</a></li>
+        <li class="m-tag-3"><a href="/tag/rest.html">REST</a></li>
+        <li class="m-tag-3"><a href="/tag/science-writing.html">Science Writing</a></li>
+        <li class="m-tag-3"><a href="/tag/scikit-learn.html">SciKit Learn</a></li>
+        <li class="m-tag-3"><a href="/tag/spacy.html">Spacy</a></li>
+        <li class="m-tag-3"><a href="/tag/sqalchemy.html">SQAlchemy</a></li>
+        <li class="m-tag-3"><a href="/tag/sqlite.html">SQLite</a></li>
+        <li class="m-tag-3"><a href="/tag/swagger.html">Swagger</a></li>
+        <li class="m-tag-3"><a href="/tag/tensorflow.html">TensorFlow</a></li>
+        <li class="m-tag-5"><a href="/tag/tutorials.html">tutorials</a></li>
+        <li class="m-tag-3"><a href="/tag/vaes.html">VAEs</a></li>
+        <li class="m-tag-3"><a href="/tag/wild-python.html">wild python</a></li>
+      </ul>
+    </nav>
+  </div>
+</div>
+</main>
+<footer><nav>
+  <div class="m-container">
+    <div class="m-row">
+      <div class="m-col-l-10 m-push-l-1">
+        <p>Dal's Portfolio. Powered by <a href="https://getpelican.com">Pelican</a> and <a href="https://mcss.mosra.cz">m.css</a>.</p>
+      </div>
+    </div>
+  </div>
+</nav></footer>
+</body>
 </html>

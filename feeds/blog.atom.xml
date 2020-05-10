@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Dal's Portfolio - Blog</title><link href="/" rel="alternate"></link><link href="/feeds/blog.atom.xml" rel="self"></link><id>/</id><updated>2019-08-23T00:00:00-05:00</updated><entry><title>A wild itertools appeared!</title><link href="/a-wild-itertools-appeared.html" rel="alternate"></link><published>2019-08-23T00:00:00-05:00</published><updated>2019-08-23T00:00:00-05:00</updated><author><name>Jon Steven Dal Williams</name></author><id>tag:None,2019-08-23:/a-wild-itertools-appeared.html</id><summary type="html">&lt;p&gt;A walkthrough and deployment use cases of the itertools standard library&lt;/p&gt;
+</summary><content type="html">&lt;section id="about-this-series"&gt;
+&lt;h2&gt;About this series&lt;/h2&gt;
+&lt;p&gt;This blog post is the first of a new series I’m starting called “Wild
+Python,” aka use cases of selected python libraries in deployment. Posts
+of this series will generally consist of a breakdown of the library and
+intended use cases, followed by several examples of how it is used in
+the context of several popular GitHub repositories. This series will be
+continually ongoing, partially to act as a personal refresher course.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="what-is-itertools"&gt;
+&lt;h2&gt;What is &lt;em&gt;itertools&lt;/em&gt;?&lt;/h2&gt;
+&lt;p&gt;Itertools is Python implementation of a common design pattern to stream
+data in &lt;a href="https://www.dataquest.io/blog/introduction-functional-programming-python/"&gt;functional
+programming&lt;/a&gt;.
+Effectively, this allows a way to take an iterable
+(&lt;code&gt;list, tuple, dict, string&lt;/code&gt; etc.) and apply a very succinct method to
+lazily iterate through them based on several commonly used pieces of
+logic. Let’s take a toy example, one of the &lt;a href="https://www.tomdalling.com/blog/software-design/fizzbuzz-in-too-much-detail/"&gt;most overused interview
+questions&lt;/a&gt;:&lt;/p&gt;
+&lt;pre class="m-code"&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;itertools&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;cycle&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;islice&lt;/span&gt;
+
+&lt;span class="n"&gt;fizzes&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;cycle&lt;/span&gt;&lt;span class="p"&gt;([&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;fizz&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;])&lt;/span&gt;
+&lt;span class="n"&gt;buzzes&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;cycle&lt;/span&gt;&lt;span class="p"&gt;([&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;buzz&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;])&lt;/span&gt;
+&lt;span class="n"&gt;numbers&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;fizzbuzz&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="sa"&gt;f&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;&lt;/span&gt;&lt;span class="si"&gt;{&lt;/span&gt;&lt;span class="n"&gt;fizz&lt;/span&gt;&lt;span class="si"&gt;}{&lt;/span&gt;&lt;span class="n"&gt;buzz&lt;/span&gt;&lt;span class="si"&gt;}&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;&lt;/span&gt; &lt;span class="ow"&gt;or&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt;
+            &lt;span class="k"&gt;for&lt;/span&gt;  &lt;span class="n"&gt;fizz&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;buzz&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="nb"&gt;zip&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;fizzes&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;buzzes&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;numbers&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;result&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;islice&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;fizzbuzz&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;16&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="nb"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;result&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;/pre&gt;
+&lt;pre&gt;1
+2
+fizz
+4
+buzz
+fizz
+7
+8
+fizz
+buzz
+11
+fizz
+13
+14
+fizzbuzz
+16&lt;/pre&gt;
+&lt;p&gt;Let’s break this down: &lt;code&gt;itertools.cycle&lt;/code&gt; consumes an iterator, then
+loops back over it from the beginning infinitely, or until a stop
+condition is reached. As the name implies, this is very useful for
+cyclic or periodic data. &lt;code&gt;count&lt;/code&gt; is another infinite iterator, that
+accepts a “start” and “step” argument, similar to &lt;code&gt;range()&lt;/code&gt; Finally,
+we have &lt;code&gt;islice&lt;/code&gt;, another piece of syntactic sugar that is equivalent
+to &lt;code&gt;for i in range(number): do_something(iterable[i])&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;However, in addition to being more readable, this has the advantage of
+speed and memory efficiency. The &lt;code&gt;for&lt;/code&gt; loop above using &lt;code&gt;range&lt;/code&gt;
+would most likely be used with a previously existing iterable, which is
+stored in RAM. This is opposed to the &lt;code&gt;islice&lt;/code&gt; implementation, which
+doesn’t store any values, only using RAM in the case that it is called.
+Note that an equivalent alternative to the islice implementation above
+is to say &lt;code&gt;for i in range(16): print(next(fizzbuzz))&lt;/code&gt; Next is an
+important method to keep in mind when working with generators.&lt;/p&gt;
+&lt;p&gt;Let’s do another example with another favorite interview question, the
+&lt;a href="https://en.wikipedia.org/wiki/Knapsack_problem"&gt;Knapsack Problem&lt;/a&gt;,
+approximated using a brute-force approach:&lt;/p&gt;
+&lt;pre class="m-code"&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;collections&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;namedtuple&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;itertools&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;combinations&lt;/span&gt;
+
+&lt;span class="n"&gt;item&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;namedtuple&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;Item&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;name value mass&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;pants&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;pants&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;40&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;shirt&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;shirt&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;shoes&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;shoes&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;50&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;stove&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;stove&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;30&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;6&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;socks&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;socks&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;50&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;water&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;water&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;70&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;7&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;tent&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;tent&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;20&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;6&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;hammock&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;hammock&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;40&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;headlamp&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;headlamp&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;50&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;possibilities&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;pants&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;shirt&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;shoes&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;stove&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;socks&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+                 &lt;span class="n"&gt;water&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;tent&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;hammock&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;headlamp&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+
+&lt;span class="c1"&gt;#assuming a knapsack that can carry 10kg:&lt;/span&gt;
+&lt;span class="n"&gt;max_weight&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;dict&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="nb"&gt;range&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;possibilities&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;+&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;combination&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;combinations&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;possibilities&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="nb"&gt;sum&lt;/span&gt;&lt;span class="p"&gt;([&lt;/span&gt;&lt;span class="n"&gt;thing&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;mass&lt;/span&gt; &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;thing&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;combination&lt;/span&gt;&lt;span class="p"&gt;])&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+            &lt;span class="n"&gt;answer&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;+&amp;#39;&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;([&lt;/span&gt;&lt;span class="n"&gt;thing&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt; &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;thing&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;combination&lt;/span&gt;&lt;span class="p"&gt;])&lt;/span&gt;
+    &lt;span class="n"&gt;error&lt;/span&gt; &lt;span class="n"&gt;output&lt;/span&gt; &lt;span class="n"&gt;required&lt;/span&gt; &lt;span class="nb"&gt;property&lt;/span&gt; &lt;span class="n"&gt;nbconvert&lt;/span&gt;        &lt;span class="n"&gt;max_weight&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;answer&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;sum&lt;/span&gt;&lt;span class="p"&gt;([&lt;/span&gt;&lt;span class="n"&gt;thing&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;thing&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;combination&lt;/span&gt;&lt;span class="p"&gt;])&lt;/span&gt;
+
+&lt;span class="nb"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;sorted&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;max_weight&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;items&lt;/span&gt;&lt;span class="p"&gt;(),&lt;/span&gt; &lt;span class="n"&gt;key&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="k"&gt;lambda&lt;/span&gt; &lt;span class="n"&gt;d&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;d&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;],&lt;/span&gt; &lt;span class="n"&gt;reverse&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="kc"&gt;True&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;&lt;/pre&gt;
+&lt;pre&gt;[('pants+socks+hammock+headlamp', 180), ('shirt+shoes+socks+headlamp', 160), ('shirt+shoes+hammock+headlamp', 150), ('pants+shoes+socks', 140), ('pants+shoes+hammock', 130), ('shirt+socks+water', 130), ('stove+socks+headlamp', 130), ('shirt+stove+socks+hammock', 130), ('water+headlamp', 120), ('shirt+water+hammock', 120), ('stove+hammock+headlamp', 120), ('socks+tent+headlamp', 120), ('shirt+socks+tent+hammock', 120), ('tent+hammock+headlamp', 110), ('pants+shirt+headlamp', 100), ('shoes+stove', 80), ('shoes+tent', 70)]&lt;/pre&gt;
+&lt;p&gt;&lt;em&gt;Note: This is neither&lt;/em&gt;&lt;a href="http://www.es.ele.tue.nl/education/5MC10/Solutions/knapsack.pdf"&gt;the most efficient
+solution&lt;/a&gt;&lt;em&gt;,
+nor is it recommended to go out into the wilderness without a shirt or
+shoes.&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;Let’s break this down: we have several items with a cost and weight
+associated with them. There are many data structures that can represent
+this, but I decided to go with named tuples for clarity’s sake (this
+will probably warrant another Wild Python article). We then iterate
+through all possible combinations of items by finding combinations of
+different length within a nested for loop. We add them to a dictionary
+if it maxes out the knapsack carrying capacity. Finally, we see what the
+highest value combination is by ordering the resulting dictionary by
+values rather than keys, then reversing it. We now have a very fast and
+memory-efficient brute force solution! ### Chain chain chain One method
+that deserves some additional explanation is &lt;code&gt;chain&lt;/code&gt;
+vs. &lt;code&gt;chain_from_iterable&lt;/code&gt;. Chain takes two or more iterables as
+arguments, and chains them together, consuming them in the order passed.
+From_iterable takes a &lt;em&gt;single&lt;/em&gt; iterator as an argument, effectively
+flattening it (think smushing a matrix into an array)&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="production-use-cases"&gt;
+&lt;h2&gt;Production use cases&lt;/h2&gt;
+&lt;p&gt;&lt;a href="https://www.tensorflow.org/guide/keras"&gt;Keras&lt;/a&gt; utilizes
+&lt;code&gt;itertools.compress&lt;/code&gt; to check whether all functions have been properly
+documented:&lt;/p&gt;
+&lt;pre class="m-code"&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;itertools&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;compress&lt;/span&gt;
+&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;assert_args_presence&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;doc&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;member&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="n"&gt;args_not_in_doc&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt; &lt;span class="ow"&gt;not&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;doc&lt;/span&gt; &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="nb"&gt;any&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;args_not_in_doc&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="k"&gt;raise&lt;/span&gt; &lt;span class="ne"&gt;ValueError&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
+            &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="si"&gt;{}&lt;/span&gt;&lt;span class="s2"&gt; &lt;/span&gt;&lt;span class="si"&gt;{}&lt;/span&gt;&lt;span class="s2"&gt; arguments are not present in documentation &amp;quot;&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;format&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nb"&gt;list&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
+                &lt;span class="n"&gt;compress&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;args_not_in_doc&lt;/span&gt;&lt;span class="p"&gt;))),&lt;/span&gt; &lt;span class="n"&gt;member&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="vm"&gt;__module__&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;/pre&gt;
+&lt;p&gt;Compress is usually used to map an iterable to the “truthiness” of
+individual components of that iterable. The list comprehension above
+contains booleans based on list membership, which is then mapped back
+onto the function arguments during the string formatting. This tells
+anyone submitting a pull request exactly what function arguments need to
+be documented.&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://numba.pydata.org/"&gt;Numba&lt;/a&gt;, a just-in-time compiler for
+scientific computing with Python, uses itertools extensively in their
+test suite:&lt;/p&gt;
+&lt;pre class="m-code"&gt;&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;test_slice_passing&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="sd"&gt;&amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+&lt;span class="sd"&gt;    Check passing a slice object to a Numba function.&lt;/span&gt;
+&lt;span class="sd"&gt;    &amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+    &lt;span class="c1"&gt;# NOTE this also checks slice attributes&lt;/span&gt;
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;check&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;d&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="n"&gt;sl&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;slice&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;got&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;cfunc&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sl&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;assertPreciseEqual&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;got&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;d&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+
+&lt;span class="n"&gt;cfunc&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;jit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;nopython&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="kc"&gt;True&lt;/span&gt;&lt;span class="p"&gt;)(&lt;/span&gt;&lt;span class="n"&gt;slice_passing&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="c1"&gt;# Positive steps&lt;/span&gt;
+    &lt;span class="n"&gt;start_cases&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[(&lt;/span&gt;&lt;span class="kc"&gt;None&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;42&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;42&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)]&lt;/span&gt;
+    &lt;span class="n"&gt;stop_cases&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[(&lt;/span&gt;&lt;span class="kc"&gt;None&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;maxposint&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;9&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;9&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;11&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;11&lt;/span&gt;&lt;span class="p"&gt;)]&lt;/span&gt;
+    &lt;span class="n"&gt;step_cases&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[(&lt;/span&gt;&lt;span class="kc"&gt;None&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;12&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;12&lt;/span&gt;&lt;span class="p"&gt;)]&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;d&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;itertools&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;product&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;start_cases&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+                                                    &lt;span class="n"&gt;stop_cases&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+                                                    &lt;span class="n"&gt;step_cases&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="n"&gt;check&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;d&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;/pre&gt;
+&lt;p&gt;These tests ensure that the JIT variant of the function has the same
+output as the python one. In order to make this test robust, they run it
+on a variety of different inputs. The &lt;code&gt;product&lt;/code&gt; is the cartesian
+product of this function, effectively a nested for loop. This is an
+efficient way to test a wide variety of sample cases in just a few lines
+of code.&lt;/p&gt;
+&lt;p&gt;Another Numfocus library, &lt;a href="https://docs.dask.org/en/latest/"&gt;Dask&lt;/a&gt;,
+leads us to &lt;code&gt;starmap&lt;/code&gt;. Unlinke &lt;code&gt;map&lt;/code&gt;, which applies a function
+across every item in an iterable, &lt;code&gt;starmap&lt;/code&gt;effectively works on
+“pre-zipped” data (effectively an “iterable of iterables”). Dask wrote
+their own variant of this, allowing for keyword arguments in addition to
+iterables. In the code below, note that “bag (db)” just represents a
+generic python object which can have multithreaded methods called on it
+using method chaining.&lt;/p&gt;
+&lt;pre class="m-code"&gt;&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;starmap&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;func&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;bag&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="o"&gt;**&lt;/span&gt;&lt;span class="n"&gt;kwargs&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;func&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="o"&gt;**&lt;/span&gt;&lt;span class="n"&gt;kwargs&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;bag&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;dask.bag&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="nn"&gt;db&lt;/span&gt;
+&lt;span class="n"&gt;data&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;5&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;6&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;7&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;8&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;9&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;)]&lt;/span&gt;
+&lt;span class="n"&gt;b&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;db&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;from_sequence&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;npartitions&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="c1"&gt;#Apply a function to each argument tuple:&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;operator&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;add&lt;/span&gt;
+&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;starmap&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;add&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;compute&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;span class="c1"&gt;# returns [3, 7, 11, 15, 19]&lt;/span&gt;
+
+&lt;span class="c1"&gt;#Apply a function to each argument tuple, with additional kwargs:&lt;/span&gt;
+&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;myadd&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;z&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+     &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;y&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;z&lt;/span&gt;
+&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;starmap&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;myadd&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;z&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;compute&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;span class="c1"&gt;# returns [13, 17, 21, 25, 29]&lt;/span&gt;&lt;/pre&gt;
+&lt;p&gt;Obviously whether to use &lt;code&gt;map&lt;/code&gt; or &lt;code&gt;starmap&lt;/code&gt; depends on the structure
+of the iterable being fed in, but…&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="considerations-regarding-readability"&gt;
+&lt;h2&gt;Considerations regarding readability&lt;/h2&gt;
+&lt;p&gt;You might notice that some itertools code is less “Pythonic” than a lot
+of code out there. Given how clear list comprehensions can be, it’s
+understandable that the traditional &lt;code&gt;reduce&lt;/code&gt; funcitonalicty was moved
+to functools rather than the global namespace. In addition, performance
+gains are
+&lt;a href="https://stackoverflow.com/questions/1247486/list-comprehension-vs-map"&gt;trivial&lt;/a&gt;
+when switching from &lt;code&gt;map&lt;/code&gt; to a list comprehension. With this in mind,
+unless you are concerned about fitting data structures in RAM, your
+first-pass attempt should probably be a list comprehension rather than
+reaching for the functools toolkit, as this makes for more readable and
+maitainable code.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="final-thoughts"&gt;
+&lt;h2&gt;Final Thoughts&lt;/h2&gt;
+&lt;p&gt;For additional use cases utilizing itertools, the &lt;a href="https://docs.python.org/3.7/library/itertools.html#itertools-recipes"&gt;Python
+documentation&lt;/a&gt;
+has some very helpful recipes. The next time you’re trying to do some
+sort of iteration on large data, or working with a heavily nested
+&lt;code&gt;for&lt;/code&gt; loop, be lazy, and reach for itertools instead!&lt;/p&gt;
+&lt;/section&gt;
+</content><category term="Blog"></category><category term="wild python"></category><category term="functional programming"></category><category term="tutorials"></category></entry><entry><title>Thoughts on Reproducibility in Data Science</title><link href="/thoughts-on-reproducibility-in-data-science.html" rel="alternate"></link><published>2019-03-19T00:00:00-05:00</published><updated>2019-03-19T00:00:00-05:00</updated><author><name>Jon Steven Dal Williams</name></author><id>tag:None,2019-03-19:/thoughts-on-reproducibility-in-data-science.html</id><summary type="html">&lt;p&gt;Coming from a natural science background, it’s unsurprising that I have
+some pretty strong opinions on reproducibilty. Most data science
+textbooks will emphasize the issues of imbalanced data sets,
+overfitting, and stratification, but this only scratches the surface of
+potential issues encountered in reproducibility. A great deal of human …&lt;/p&gt;</summary><content type="html">&lt;p&gt;Coming from a natural science background, it’s unsurprising that I have
+some pretty strong opinions on reproducibilty. Most data science
+textbooks will emphasize the issues of imbalanced data sets,
+overfitting, and stratification, but this only scratches the surface of
+potential issues encountered in reproducibility. A great deal of human
+error is possible in a machine learning system that can trip up even the
+smartest scientists. This is very much an unsolved problem that quite
+likely lacks a one-size-fits-all solution. That said, I’d like to focus
+on one of the major pain points in any pipeline: exploratory data
+analysis and feature engineering.&lt;/p&gt;
+&lt;section id="notebook-blues"&gt;
+&lt;h2&gt;Notebook Blues&lt;/h2&gt;
+&lt;p&gt;Joel Grus’s &lt;a href="https://docs.google.com/presentation/d/1n2RlMdmv1p25Xy5thJUhkKGvjtV-dkAIsUXP-AL4ffI/edit#slide=id.g3a428e2eb8_0_241"&gt;talk on why he dislikes
+notebooks&lt;/a&gt;
+raises a lot of the more important issues with this concept. Notebooks
+lend themselves to a scripting style of programming, which would be fine
+in the EDA stage were it not for the issues of hidden states between
+cells. This can lead to some pretty poor conclusions if there are
+transformations in your data caused by these hidden states. However,
+being able to experiment with different features/graphing allows for
+maximum productivity. There’s unfortunately not a happy medium (to my
+knowledge) between the flexibility and interactivity provided by
+notebooks and the reproducibility provided by a traditional software
+engineering workflow. This problem is compounded when you have multiple
+people working asynchronously on a project, even with the help of
+version control. I’d like to share some of my observations and thoughts
+on this issue, given it’s importance to the data science workflow.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="analysis-as-a-dag"&gt;
+&lt;h2&gt;Analysis as a DAG&lt;/h2&gt;
+&lt;p&gt;There are several pieces of tech (Make, Airflow,
+Luigi) which utilize &lt;a href="https://drivendata.github.io/cookiecutter-data-science/"&gt;analysis as a directed acyclic
+graph&lt;/a&gt;. This
+is an incredibly useful abstraction, though the actual shape of the DAG
+will certainly evolve over time. One of my first attempts to remedy
+reproducibility issues using this paradigm is to &lt;em&gt;only&lt;/em&gt; use code that
+has been previously defined in well-commented, version controlled python
+files, which are imported into the notebook used for data analysis.
+However, this limits the ability to add new steps. Every time you decide
+you want a new transformation, you have to add it to the python module
+and then restart the kernel. This is especially bad if your pipeline
+includes a large amount of computational overhead to load the data in
+the first place, which is quite common. This can be partially fixed by
+using the autoreload magic method into a cell:&lt;/p&gt;
+&lt;pre&gt;%load_ext autoreload
+%autoreload 2&lt;/pre&gt;
+&lt;p&gt;This will make sure that every time you execute a cell, it re-imports
+everything from your module. You can also exclude certain modules with
+&lt;code&gt;%aimport -not_this_module&lt;/code&gt; to help with load time.The
+&lt;a href="https://ipython.readthedocs.io/en/stable/config/extensions/autoreload.html?highlight=autoreload"&gt;documentation&lt;/a&gt;,
+however, points out that this doesn’t always work when modifying module
+code. That brings us to the next approach:&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="tddd"&gt;
+&lt;h2&gt;TDDD&lt;/h2&gt;
+&lt;p&gt;I recently read a textbook that focues on &lt;a href="https://www.amazon.com/Thoughtful-Machine-Learning-Python-Test-Driven-ebook/dp/B01N12DLF9"&gt;test-driven data
+science&lt;/a&gt;.
+Though I’m not a big fan of pigeonholing myself into using
+object-oriented programming for every single model, this does actually
+create a decent amount of &lt;em&gt;extensibility&lt;/em&gt; in the data analysis phase.
+The idea is to define a class which encapuslates any feature engineering
+and graphing in a .py file within a module. You can then open up a
+Jupyter notebook, and import that class from that module, where you can
+then define a subclass:&lt;/p&gt;
+&lt;pre class="m-code"&gt;&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;eda&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;model&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;new_transformation&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+        &lt;span class="c1"&gt;#transformations go here&lt;/span&gt;
+        &lt;span class="k"&gt;pass&lt;/span&gt;
+
+&lt;span class="n"&gt;predictor&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;eda&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;span class="n"&gt;predictor&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;plot_pca&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;/pre&gt;
+&lt;p&gt;The idea here is to extend the feature engineering in such a way that
+the core behavior is not affected, as an exception will be thrown
+otherwise. This also remedies the previous issue of kernel reloads, as
+the behavior of your ETL can be modified without affecting any imports.
+Then, once you decide which transformations to keep, you just throw
+those into your base class, marking your results in your notebook.&lt;/p&gt;
+&lt;p&gt;Some of the problems with this approach should be apparent quite
+quickly. First off, it feels unnatural compared to the normal scripting
+approach taken with notebooks. Secondly, if you need to modify the child
+class, you’ll have to re-execute cells out of order, or take another
+very strange approach:&lt;/p&gt;
+&lt;pre class="m-code"&gt;&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;newer_transformation&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+    &lt;span class="c1"&gt;#new logic defined in a later cell&lt;/span&gt;
+    &lt;span class="k"&gt;pass&lt;/span&gt;
+
+&lt;span class="n"&gt;eda&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;featurename&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;newer_transformation&lt;/span&gt;&lt;/pre&gt;
+&lt;p&gt;It works, but it’s quite an unnatural paradigm. The nice part about this
+is you can call &lt;code&gt;dir(model)&lt;/code&gt; to keep track of what’s been added. Note
+that there is also the &lt;a href="http://www.tdda.info/pdf/tdda-quickref.pdf"&gt;test-driven data analysis
+library&lt;/a&gt; which abstracts
+away many of the assertions used in the &lt;em&gt;Thoughtful Machine Learning&lt;/em&gt;
+approach, but I personally have no experience using this library. Their
+documentation is quite promising, however, so I’d recommend checking it
+out if you like this approach.&lt;/p&gt;
+&lt;p&gt;##More general tips ###Making requirements explicit A very useful
+extension to include in your notebooks is the
+&lt;a href="https://github.com/rasbt/watermark"&gt;watermark&lt;/a&gt; extension:&lt;/p&gt;
+&lt;pre class="m-code"&gt;&lt;span class="o"&gt;%&lt;/span&gt;&lt;span class="n"&gt;load_extension&lt;/span&gt; &lt;span class="n"&gt;watermark&lt;/span&gt;
+&lt;span class="o"&gt;%&lt;/span&gt;&lt;span class="n"&gt;watermark&lt;/span&gt; &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;iversions&lt;/span&gt;&lt;/pre&gt;
+&lt;p&gt;This is basically a mini requirements.txt for a notebook, which can help
+people later down the road to reproduce your analysis. As a more
+advanced approach, Docker can be used to containerize notebooks, and the
+&lt;a href="https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html"&gt;Jupyter team has several containers you can use as a starting
+point&lt;/a&gt;&lt;/p&gt;
+&lt;section id="making-intention-explicit"&gt;
+&lt;h3&gt;Making intention explicit&lt;/h3&gt;
+&lt;p&gt;The markdown cells interspersed in your notebooks should have more than just analysis of the results. You should
+define &lt;em&gt;why&lt;/em&gt; you chose this process in the first place. I would
+recommend doing this &lt;em&gt;before&lt;/em&gt; running code, because for a failed
+analysis it’s something that easily falls by the wayside. But true
+negatives are important too, so document everything! Rose et
+al. published &lt;a href="https://arxiv.org/abs/1810.08055"&gt;a series of heuristics on reproducibility in
+Jupyter&lt;/a&gt; which goes into more
+detail on these points, as well as a few other issues touched in this
+article.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="naming-conventions-and-asynchronous-workflows"&gt;
+&lt;h3&gt;Naming conventions and asynchronous workflows&lt;/h3&gt;
+&lt;p&gt;Though &lt;a href="https://www.zepl.com/"&gt;ZEPL&lt;/a&gt; attempts to fix this, asynchronous work
+in jupyter notebooks is generally ill-advised. This is unless you’re
+hosting them on your own server with continuous integration built-in,
+which creates another layer of technical debt. The phenomenal
+&lt;a href="http://drivendata.github.io/cookiecutter-data-science/"&gt;cookiecutter data
+science&lt;/a&gt;
+article sums this up well:&lt;/p&gt;
+&lt;blockquote&gt;
+When we use notebooks in our work, we often subdivide the notebooks
+folder. For example, notebooks/exploratory contains initial
+explorations, whereas notebooks/reports is more polished work that
+can be exported as html to the reports directory. Since notebooks are
+challenging objects for source control (e.g., diffs of the json are
+often not human-readable and merging is near impossible), we
+recommended not collaborating directly with others on Jupyter
+notebooks. There are two steps we recommend for using notebooks
+effectively:&lt;/blockquote&gt;
+&lt;blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;Follow a naming convention that shows the owner and the order the
+analysis was done in. We use the format --.ipynb (e.g.,
+0.3-bull-visualize-distributions.ipynb).&lt;/li&gt;
+&lt;li&gt;Refactor the good parts. Don’t write code to do the same task in
+multiple notebooks. If it’s a data preprocessing task, put it in
+the pipeline at src/data/make_dataset.py and load data from
+data/interim. If it’s useful utility code, refactor it to src.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;That brings us to one final consideration:&lt;/p&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+&lt;section id="papermill"&gt;
+&lt;h2&gt;Papermill&lt;/h2&gt;
+&lt;p&gt;Stripe &lt;a href="https://stripe.com/blog/reproducible-research"&gt;wrote a blog post on reproducible data
+science&lt;/a&gt; a few years
+ago. Their approach was twofold: 1. They created a pre-commit hook that
+serves notebooks statically as HTML, and strips results from all cells.
+This ensures back-to-front execution of notebooks. 2. They created
+common entry points for the queries that produced their analysis data.
+The next year, a NumFOCUS project called
+&lt;a href="https://github.com/nteract/papermill"&gt;papermill&lt;/a&gt; was created that
+standardizes this process, with quite a few added benefits. First off,
+it fixes the point-of-entry problem with accessing data by allowing
+direct linkage to Azure/S3 buckets via CLI. It also allows back-to-front
+execution by including a testing framework for individual notebooks, as
+well as a form of integration testing by allowing notebooks to be
+executed in sequence if needed. This ties into the Analysis as a DAG
+paradigm, as you can run different tranformations based on the result of
+different experiments. Did your neural network overfit your data?
+Increase the dropout or trim the layers and try again automatically. Or
+vice-versa!&lt;/p&gt;
+&lt;figure&gt;
+&lt;img alt="Explicit variables are best variables!" src="https://github.com/nteract/papermill/raw/master/docs/img/enable_parameters.gif" /&gt;
+&lt;figcaption&gt;Explicit variables are best variables!&lt;/figcaption&gt;
+&lt;/figure&gt;
+&lt;p&gt;Two super useful features in this library are parameterization of cells
+and recording of output. Parameterization allows variables to be
+explicitly defined within cells. This increases transparency and allows
+for rapid iteration, as the parameters can be changed on subsequent runs
+using the CLI. Recording allows for cell output to be stored, helping
+with the hidden state issue that notebooks so often encounter. These are
+godsends for large teams. Papermill allows you to load multiple
+notebooks, and load parameters and outputs (including graphs) from all
+notebooks as a dataframe, so you can get a meta-analysis of what
+everyone in the team has tried!
+&lt;a href="https://medium.com/netflix-techblog/scheduling-notebooks-348e6c14cfd6"&gt;Netflix&lt;/a&gt;
+has made great use of papermill, so I’d recommend reading their entries
+for additional information.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="conclusions"&gt;
+&lt;h2&gt;Conclusions&lt;/h2&gt;
+&lt;p&gt;Some people may think these approaches are overkill, but
+good process at this stage can lead to better production systems down
+the line. Take a little more time with your EDA, and you’ll save
+yourself some technical debt in the long run. And as always, not one
+process works for everyone, so I’ve tried to give an overview of the
+notebook reproducibility landscape rather than dictating from an ivory
+tower. That being said, there are a few things to keep in mind no matter
+what approach you prefer (aka &lt;strong&gt;TL;DR&lt;/strong&gt;):&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Use some variant of cookiecutter&lt;/li&gt;
+&lt;li&gt;Name your notebooks well&lt;/li&gt;
+&lt;li&gt;Be explicit in each step, and remember true negatives are also
+valuable&lt;/li&gt;
+&lt;li&gt;Refactor important code into version-controlled python modules when
+possible&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Thanks for reading!&lt;/p&gt;
+&lt;/section&gt;
+</content><category term="Blog"></category><category term="Jupyter"></category><category term="Bash"></category><category term="reproducibility"></category><category term="Papermill"></category><category term="Airflow"></category><category term="Luigi"></category></entry><entry><title>Data Science for Social Good</title><link href="/data-science-for-social-good.html" rel="alternate"></link><published>2019-03-09T00:00:00-06:00</published><updated>2019-03-09T00:00:00-06:00</updated><author><name>Jon Steven Dal Williams</name></author><id>tag:None,2019-03-09:/data-science-for-social-good.html</id><summary type="html">&lt;p&gt;A rundown of several projects taking data-driven approaches to effective altruism.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;Today I wanted to write a short article on some of the phenomenal
+projects out there that use machine learning for very effective
+altruism, also coined data science for social good (DSSG). Thanks to
+some of my favorite podcasts, including
+&lt;a href="https://twimlai.com/"&gt;TWiMLAI&lt;/a&gt;, &lt;a href="https://www.thetalkingmachines.com/home?context_entity_type=node&amp;amp;context_entity_id=14033"&gt;Talking
+Machines&lt;/a&gt;,
+&lt;a href="https://dataskeptic.com/"&gt;Data Skeptic&lt;/a&gt;, &lt;a href="https://changelog.com/practicalai"&gt;Practical
+AI&lt;/a&gt;, and the much-missed
+&lt;a href="http://partiallyderivative.com/"&gt;Partially Derivative&lt;/a&gt;, I’m able to
+keep abreast of all this awesome work, and I wanted to write this
+article as a summary of all the great projects and endeavors that
+inspire me.&lt;/p&gt;
+&lt;section id="pulse"&gt;
+&lt;h2&gt;Pulse&lt;/h2&gt;
+&lt;p&gt;One of the largest and most ambitious endeavors that I know of is the
+&lt;a href="https://www.unglobalpulse.org/"&gt;United Nations’ Global Pulse
+initiative&lt;/a&gt;. Billed as “harnessing
+big data and artificial intelligence for sustainable development and
+humanitarian action,” a mission that they certainly accomplish. Two of
+my favorite projects from them include &lt;a href="https://www.worldbank.org/en/news/press-release/2018/09/23/united-nations-world-bank-humanitarian-organizations-launch-innovative-partnership-to-end-famine"&gt;predicting food shortages with
+computer vision at the
+edge&lt;/a&gt;
+and &lt;a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3237433/"&gt;diagnostics without advanced laboratory
+equipment&lt;/a&gt;.
+The first project uses on-device deployment of machine learning models
+to predict rot through images of manioc (tapioca) leaves, an important
+source of nutrients in sub-saharan Africa. Given the relatively low
+price of smartphones and the low supply of microscopy experts, it makes
+sense that a mobile-based microscopy platform would be a great help for
+rural low-income communities.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="microsofts-ai-for-good"&gt;
+&lt;h2&gt;Microsoft’s AI for good&lt;/h2&gt;
+&lt;p&gt;Microsoft may be at the forefront of the tech giants in terms of
+corporate social responsibility thanks to their &lt;em&gt;AI for Good&lt;/em&gt;
+initiative. Jennifer Marsman’s interview on &lt;a href="https://changelog.com/practicalai/29"&gt;Practical
+AI&lt;/a&gt; is one of the most
+inspiring talks I’ve heard in a while. Her enthusiasm is infectious, and
+the grants that Microsoft has funded show some incredibly creativity.
+“Project Premonition” combines drone detection of mosquito hotspots with
+robotic mosquito traps in said hotspots. This is combined with a
+cloud-based genomics platform to predict disease outbreaks before they
+happen! Another project, “Farm Beats,” helps water conservation and crop
+yield efforts using a low-cost approach that combines machine vision and
+remote sensors. Networking these sensors is normally cost-prohibitive
+due to range limitations in routers, but by using radio waves, a
+low-power way to get training data on the moisture content of the soil
+in different areas. Microsoft &lt;a href="https://news.microsoft.com/apac/features/ai-for-earth-helping-save-the-planet-with-data-science/"&gt;has an
+article&lt;/a&gt;
+describing these, and more.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="dedicated-dssg-organizations"&gt;
+&lt;h2&gt;Dedicated DSSG Organizations&lt;/h2&gt;
+&lt;p&gt;Both the University of Washington and &lt;a href="https://dssg.uchicago.edu/projects/"&gt;University of
+Chicago&lt;/a&gt; run fellowships to
+assist groups with a desire to make a positive impact using data. For U
+Chicago, this is as diverse as reducing waste, preventing harassment of
+tenants in gentrified areas, helping fix labor shortages, and improving
+doctor-patient matching. The linked page has the full range of projects.
+Of particular note is their &lt;a href="https://github.com/dssg/hitchhikers-guide"&gt;Hitchhiker’s Guide to Data Science for
+Social Good&lt;/a&gt;, which covers
+some basic database, machine learning, and data exploration problems
+with this type of data.&lt;/p&gt;
+&lt;p&gt;UW’s &lt;a href="https://escience.washington.edu/"&gt;eScience Institute&lt;/a&gt; has a
+broader approach, identifying traditional scientific endeavors that can
+benefit from contemporary data science approaches. There are several
+projects focusing on oceanography and biomedical applications that are
+of particular note. On the oceanography side, UW &lt;a href="https://escience.washington.edu/blog-moonlighting-in-oceanography-our-work-with-the-regional-cabled-array/"&gt;has built an
+underwater observatory near a
+volcano&lt;/a&gt;
+which records gathers a deluge of sonar data, which eScience was able to
+build infrastructure for. In terms of biomedical applications, there is
+a team that is &lt;a href="https://projectreporter.nih.gov/project_info_description.cfm?aid=9639494&amp;amp;icde=43441586&amp;amp;ddparam=&amp;amp;ddvalue=&amp;amp;ddsub=&amp;amp;cr=1&amp;amp;csb=default&amp;amp;cs=ASC&amp;amp;pball="&gt;building models to identify candidates for new
+Alzheimer’s
+therapeutics&lt;/a&gt;.
+Finding a cure, prevention, or treatment for Alzheimer’s is, in my
+opinion, one of the most important medical research projects today.&lt;/p&gt;
+&lt;p&gt;Outside of the university environment, there is also
+&lt;a href="https://www.datakind.org/projects"&gt;DataKind&lt;/a&gt;, which hosts
+weekend-long data dives and community events to help people. Their
+approach is to designate a “data ambassador” that acts as the point of
+communication between an external mission driven organization, and the
+DataKind data experts and project management, ensuring that the right
+problems are being addressed.&lt;/p&gt;
+&lt;p&gt;In addition to these more general programs, there are also some highly
+tailored organizations that seek to put their full weight behind a
+singular mission. One example of this is
+&lt;a href="https://www.thorn.org/"&gt;Thorn&lt;/a&gt;, an organization that seeks to combat
+sexual abuse and human traficking. Another is &lt;a href="https://www.datafordemocracy.org/"&gt;Data for
+Democracy&lt;/a&gt;, which helps to inform
+policy decisions with an aim to do civic good.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="crowdsourcing-approaches"&gt;
+&lt;h2&gt;Crowdsourcing Approaches&lt;/h2&gt;
+&lt;p&gt;Kaggle, the primary competition platform for data science, has
+historically had many competitions in this vein. Some have included
+identifying humpback whales and early lung cancer detection. However,
+there is another competition platform called
+&lt;a href="https://www.drivendata.org/"&gt;Driven&lt;/a&gt; that focuses entirely on DSSG
+competitions. One neat feature is that people that have a data source
+that they want insight from can submit it to a competition to
+fast-forward/crowdsource the analysis, so long as the spirit of the
+competition is in line with the site’s mission.&lt;/p&gt;
+&lt;/section&gt;
+&lt;section id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;If you have a data-based skillset that you want to put to good use,
+there are no shortage of ways to get out there and help. Often, the
+hardest part of any programming project is finding a problem to solve,
+which organizations like Driven tend to help. Hopefully, some of the
+projects in this post will give you some ideas as well!&lt;/p&gt;
+&lt;/section&gt;
+</content><category term="Blog"></category><category term="Mission-driven data science"></category><category term="Microsoft"></category></entry></feed>
