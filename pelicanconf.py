@@ -27,8 +27,9 @@ LINKS = (('Pelican', 'http://getpelican.com/'),
 
 # Social widget
 SOCIAL = (('Twitter' 'twitter.com/dendrondal'),
-          ('LinkedIn', 'https://www.linkedin.com/in/dal-williams/'),)
-
+          ('LinkedIn', 'https://www.linkedin.com/in/dal-williams/'),
+          ('GitHub', 'github.com/dendrondal'))
+M_SOCIAL_TWITTER_SITE = '@dendrondal' 
 DEFAULT_PAGINATION = 10
 
 # Uncomment following line if you want document-relative URLs when developing
@@ -46,6 +47,10 @@ M_THEME_COLOR = '#353535'
 PLUGIN_PATHS = ['m.css/plugins']
 PLUGINS = ['m.htmlsanity', 'm.code']
 
-M_FAVICON = ('/content/media/favicon.ico', 'image/x-ico')
-M_SITE_LOGO = '/content/media/headshot.jpg'
+M_FAVICON = ('images/favicon.ico', 'image/x-ico')
+M_SITE_LOGO = 'images/tree.jpg'
 # Navbar
+M_LINKS_NAVBAR1 = [('About', 'pages/about-me.html', 'about', []),
+                    ('GitHub', 'https://github.com/dendrondal', '', []),
+                    ('LinkedIn', 'https://linkedin.com/in/dal-williams', '', []),
+                    ('Twitter', 'https://twitter.com/dendrondal', '', [])]
